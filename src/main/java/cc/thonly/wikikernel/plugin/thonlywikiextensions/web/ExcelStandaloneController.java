@@ -50,7 +50,7 @@ public class ExcelStandaloneController {
                              Integer year) {
         Viewer viewer = currentUser.viewer();
         List<Integer> years = store.years();
-        int target = year == null || !years.contains(year) ? years.get(years.size() - 1) : year;
+        int target = year == null || !years.contains(year) ? store.defaultYear() : year;
         Map<String, Object> model = new LinkedHashMap<>();
         model.put("years", years);
         model.put("year", target);

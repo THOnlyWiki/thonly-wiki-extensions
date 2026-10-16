@@ -55,9 +55,9 @@ public class ActivityPageHook implements PageDisplayHook {
 
     private String render(PageDisplayContext context) {
         List<Integer> years = store.years();
-        int year = intOf(context.query().get("year"), years.get(years.size() - 1));
+        int year = intOf(context.query().get("year"), store.defaultYear());
         if (!years.contains(year)) {
-            year = years.get(years.size() - 1);
+            year = store.defaultYear();
         }
         List<Map<String, Object>> rows = store.list(year);
         boolean canEdit = accessCheck.can(AccessAction.EDIT, PAGE_TITLE, context.viewer());

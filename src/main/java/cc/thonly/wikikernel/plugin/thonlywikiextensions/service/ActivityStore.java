@@ -86,7 +86,6 @@ public class ActivityStore {
                 + "deleted INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)");
     }
 
-    /** 已有的年份（升序）。 */
     /** 已经确保存在的「最远年份」：跨年后的第一个请求会再补一次（volatile，不依赖重启）。 */
     private volatile int ensuredThrough = 0;
 
@@ -129,6 +128,22 @@ public class ActivityStore {
             years.add(LocalDateTime.now().getYear());
         }
         return new ArrayList<>(years);
+    }
+
+    /**
+     * 默认展示年份：优先「服务器当前年」（年份延伸后列表里总是有它），
+     * 这样往后的 +1 / +2 空表不会抢先成为各页面的默认年份。
+     */
+    public int defaultYear() {
+        List<Integer> years = years();
+        int current = LocalDateTime.now().getYear();
+        int target = -1;
+        for (int year : years) {
+            if (year <= current) {
+                target = year;
+            }
+        }
+        return target > 0 ? target : years.get(years.size() - 1);
     }
 
     /** 某年的活动（按分类 + 顺序，排除已删除）。 */

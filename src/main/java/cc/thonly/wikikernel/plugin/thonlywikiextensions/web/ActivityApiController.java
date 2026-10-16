@@ -72,7 +72,7 @@ public class ActivityApiController {
         if (!accessCheck.canRead(PAGE_TITLE, viewer)) {
             return forbidden("permissions.readForbidden");
         }
-        int target = year == null ? store.years().get(store.years().size() - 1) : year;
+        int target = year == null ? store.defaultYear() : year;
         List<Map<String, Object>> rows = new ArrayList<>();
         for (Map<String, Object> row : store.list(target)) {
             rows.add(decorate(target, row));
@@ -93,7 +93,7 @@ public class ActivityApiController {
         if (!accessCheck.can(AccessAction.EDIT, PAGE_TITLE, viewer)) {
             return forbidden("permissions.editForbidden");
         }
-        int target = year == null ? store.years().get(store.years().size() - 1) : year;
+        int target = year == null ? store.defaultYear() : year;
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("year", target);
         data.put("revisions", store.revisions(target, limit == null ? 50 : limit));
