@@ -99,3 +99,65 @@ body.thonly-calendar-page .thonly-calendar-sep {
         min-height: 0;
     }
 }
+
+/* ============================================================
+   重叠修复：evoCalendar 自带的响应式断点按**视口**写（1280 / 1024），
+   但日历在 wiki 正文里的可用宽度本来就窄（1600 视口时约 1056px）——
+   于是视口 1025–1600 这一段，月历表格撑不过 `calc(100% - 600px)` 的月历区，
+   会溢出到右侧「当天活动」面板（calendar-events）底下造成重叠。
+   这里按**容器实际宽度**再补一档紧凑布局（等同它 ≤1024 的那套尺寸）：
+   侧栏 175 + 月历 `calc(100% - 475px)` + 活动面板 300 = 正好 100%，不溢出。
+   ============================================================ */
+@media screen and (min-width: 1025px) and (max-width: 1600px) {
+    .calendar-sidebar {
+        width: 175px;
+    }
+
+    .calendar-inner {
+        padding: 50px 10px 70px 10px;
+        max-width: calc(100% - 475px);
+        margin-left: 175px;
+    }
+
+    .sidebar-hide .calendar-inner {
+        max-width: calc(100% - 300px);
+    }
+
+    .event-hide .calendar-inner {
+        max-width: calc(100% - 175px);
+    }
+
+    .event-hide.sidebar-hide .calendar-inner {
+        max-width: 100%;
+    }
+
+    .calendar-events {
+        width: 300px;
+        padding: 70px 10px 60px 10px;
+    }
+
+    tr.calendar-body .calendar-day .day {
+        padding: 10px;
+        height: 45px;
+        width: 45px;
+        font-size: 16px;
+    }
+
+    .event-indicator > .type-bullet > div {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .calendar-sidebar > span#sidebarToggler,
+    #eventListToggler {
+        width: 50px;
+        height: 50px;
+    }
+}
+
+/* 兜底：再窄也不让月历内容外溢（宁可自己横向滚动，也不压到右侧面板下面） */
+.calendar-inner {
+    min-width: 0;
+    overflow-x: auto;
+}
