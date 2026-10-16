@@ -1,0 +1,70 @@
+/*
+ * 「活动分布地图」样式（页面正文接管，不嵌 iframe）。
+ * 按钮（全屏预览 / 其它地区标签）不覆盖颜色：吃主站自己的 button 主题。
+ */
+
+.thonly-map-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 0 10px;
+}
+
+.thonly-map-hint {
+    color: #54595d;
+    font-size: 0.9em;
+}
+
+.thonly-map-wrap {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #c8ccd1;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.thonly-map-canvas {
+    width: 100%;
+    height: min(72vh, 860px);
+    min-height: 420px;
+}
+
+/* 「全屏预览」= 大弹窗（不是浏览器真全屏）：画布由 JS 移进大弹窗，关闭时移回。
+   层级：分类词条弹窗（1200）> 大弹窗（1100）> 页面 */
+.thonly-map-modal {
+    z-index: 1100;
+}
+
+.thonly-map-modal-box {
+    display: flex;
+    flex-direction: column;
+    width: min(1500px, 94vw);
+    height: 88vh;
+    max-width: none;
+    max-height: none;
+    overflow: hidden;
+    font-size: 1rem;
+}
+
+.thonly-map-modal-body {
+    flex: 1;
+    min-height: 0;
+    padding: 0;
+}
+
+.thonly-map-modal-body .thonly-map-canvas {
+    height: 100%;
+    min-height: 0;
+}
+
+.thonly-map-dialog-overlay {
+    z-index: 1200;
+}
+
+.thonly-map-list {
+    margin: 0;
+    padding-left: 1.2em;
+    line-height: 1.9;
+}

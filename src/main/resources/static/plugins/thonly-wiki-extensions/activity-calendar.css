@@ -1,0 +1,101 @@
+/*
+ * 「活动日历」样式：evoCalendar 本体样式在 calendar/evo-calendar.css（照源站打包），
+ * 这里只做三处集成的尺寸与外观微调。
+ */
+
+/* 通用容器：三种用法（标签 / 页面接管 / 独立页）共用 */
+.touhou-calendar {
+    min-height: 640px;
+}
+
+/* 加载中 / 加载失败：给一块浅色占位，避免页面先闪一大片空白 */
+.touhou-calendar.thonly-calendar-loading {
+    display: flex;
+    min-height: 320px;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #c8ccd1;
+    border-radius: 4px;
+    background: #fbfbfb;
+    color: #72777d;
+}
+
+/* wiki 页面（标签 / 正文接管）：提示行 + 日历之间的间距 */
+.thonly-calendar-app .thonly-calendar-hint {
+    margin: 0 0 10px;
+    color: #54595d;
+    font-size: 0.9em;
+}
+
+.thonly-calendar-app .touhou-calendar {
+    margin: 0 0 12px;
+}
+
+/* 独立页 /calendar：浅灰底 + 居中卡片，与 /excel 独立页同一观感 */
+body.thonly-calendar-page {
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+    font-family: '-apple-system', 'BlinkMacSystemFont', 'PingFang SC', 'Segoe UI Variable Display', 'Roboto',
+    'Helvetica Neue', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Yu Gothic UI', sans-serif;
+}
+
+body.thonly-calendar-page .thonly-calendar-shell {
+    box-sizing: border-box;
+    width: 90%;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+body.thonly-calendar-page .thonly-calendar-head h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+    text-align: center;
+    color: #444;
+}
+
+body.thonly-calendar-page .thonly-calendar-head p {
+    margin: 0 0 16px;
+    text-align: center;
+}
+
+body.thonly-calendar-page .thonly-calendar-head a {
+    color: #007bff;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+
+body.thonly-calendar-page .thonly-calendar-head a:hover {
+    color: #0056b3;
+    background-color: #e7f0ff;
+}
+
+body.thonly-calendar-page .thonly-calendar-sep {
+    margin: 0 4px;
+    color: #c8ccd1;
+}
+
+@media (max-width: 768px) {
+    body.thonly-calendar-page .thonly-calendar-shell {
+        width: 100%;
+        margin: 0;
+        padding: 12px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    body.thonly-calendar-page .thonly-calendar-head h1 {
+        font-size: 22px;
+    }
+
+    .touhou-calendar {
+        min-height: 0;
+    }
+}

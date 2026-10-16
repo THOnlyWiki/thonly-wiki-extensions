@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<!-- 独立页 /excel —— 照 D:\wwwroot\THONLY_CC_PROJECT\excel\index.html 复刻（无 wiki 布局、**只读**）：
+     编辑功能全部在 wiki 主站的 /wiki/线下活动速查表 里（那边有权限的人才能看到编辑控件） -->
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${pageTitle}">全国东方Project线下活动表格</title>
+    <link rel="stylesheet" th:href="@{/plugins/thonly-wiki-extensions/activity.css}"/>
+    <meta name="robots" content="noindex"/>
+</head>
+<body class="thonly-excel-page">
+<div class="thonly-app">
+    <div class="thonly-logo">
+        <img width="125" th:src="@{/img/wiki-logo.svg}" alt="Touhou Activities Wiki Logo"/>
+    </div>
+    <div class="thonly-title" th:text="${pageTitle}">全国东方Project线下活动表格</div>
+    <p>
+        Tips：如果您想获得编辑权限，请联系QQ群内管理员。如果您发现表格中信息有误，欢迎来群里捉虫。
+        <a target="_blank" rel="noopener" style="color:#EC7063;"
+           href="https://qm.qq.com/cgi-bin/qm/qr?_wv=1027&amp;k=yI4hzduOvfoisCSfcG7RRD5O5daf_UDi">东方Project线下活动维基群：868256565</a>
+    </p>
+    <p class="thonly-readonly-tip">
+        本页为只读展示；编辑（增 / 删 / 改 / 查历史）在
+        <a th:href="@{/wiki/线下活动速查表(v=${year})}">主站的「线下活动速查表」</a> 里进行。
+    </p>
+
+    <div class="thonly-search-container">
+        <input type="text" class="thonly-search" placeholder="搜索活动(可筛选省份)..."/>
+    </div>
+
+    <label class="thonly-condition">
+        <select class="year" id="thonly-year" name="年份">
+            <option th:each="y : ${years}" th:value="${y}" th:text="${y}"
+                    th:selected="${y == year}">2026</option>
+        </select>
+        <select class="type" id="thonly-type" name="类型">
+            <option value="ALL">全部</option>
+            <option value="TOUHOU_ONLY">THO</option>
+            <option value="TOUHOU_PARTY">THP&amp;茶会</option>
+            <option value="SCHOOL_PARTY">高校例会</option>
+            <option value="LIVE_OR_MUSIC">Live&amp;音乐会</option>
+        </select>
+    </label>
+
+    <table class="thonly-excel" th:attr="data-year=${year}">
+        <thead>
+        <tr>
+            <th style="width: 8%">状态</th>
+            <th style="width: 29%">名字</th>
+            <th style="width: 17%">地区</th>
+            <th style="width: 17%">日期</th>
+            <th style="width: 13%">QQ群</th>
+            <th style="width: 16%">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="row : ${rows}" th:attr="data-id=${row.id},data-category=${row.category}">
+            <td th:classappend="${#strings.contains(row.status, '取消')} ? 'cancelled' : ''"
+                th:text="${#strings.isEmpty(row.status) ? '—' : row.status}">计划</td>
+            <td th:text="${row.name}">名字</td>
+            <td th:text="${row.region}">地区</td>
+            <td th:text="${row.date}">日期</td>
+            <td th:text="${row.qq}">QQ群</td>
+            <td><a th:if="${row.icsUrl != null}" th:href="${row.icsUrl}" download=""
+                   title="下载 .ics，加入手机 / 电脑日历">加入日历</a></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <center>
+        <p><a th:href="@{/wiki/首页}">前往主站</a></p>
+    </center>
+
+    <div class="thonly-back-to-top">
+        <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M153.979 174.004h718.833c16.142 0 29.127-12.986 29.127-29.127s-12.986-29.127-29.127-29.127h-718.833c-16.142 0-29.127 12.986-29.127 29.127s12.986 29.127 29.127 29.127zM533.845 246.701c-11.408-11.408-29.855-11.408-41.142 0l-351.952 351.952c-11.408 11.408-11.408 29.855 0 41.142 5.703 5.703 13.107 8.496 20.631 8.496s14.928-2.791 20.631-8.496l302.194-302.194v542.614c0 16.142 12.986 29.127 29.127 29.127s29.127-12.986 29.127-29.127v-542.614l302.194 302.194c5.703 5.703 13.107 8.496 20.631 8.496s14.928-2.791 20.631-8.496c11.408-11.408 11.408-29.855 0-41.142l-352.074-351.952z"></path>
+        </svg>
+    </div>
+</div>
+<p class="thonly-message" id="thonly-message" hidden></p>
+<script th:src="@{/plugins/thonly-wiki-extensions/activity.js}" defer></script>
+</body>
+</html>
