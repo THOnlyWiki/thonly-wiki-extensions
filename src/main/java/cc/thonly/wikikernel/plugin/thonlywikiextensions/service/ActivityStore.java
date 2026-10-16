@@ -87,7 +87,31 @@ public class ActivityStore {
     }
 
     /** 已有的年份（升序）。 */
+    /** 已经确保存在的「最远年份」：跨年后的第一个请求会再补一次（volatile，不依赖重启）。 */
+    private volatile int ensuredThrough = 0;
+
+    /**
+     * 按需把数据表年份延伸到「**服务器当前年 + 2**」：读取年份 / 列表、新增与修改入口都会先过一遍；
+     * 已覆盖时只是一次整数比较，不产生数据库开销；跨年后由第一个请求自动补上新表。
+     */
+    public synchronized void ensureUpcomingYears() {
+        int currentYear = LocalDateTime.now().getYear();
+        if (ensuredThrough >= currentYear + 2) {
+            return;
+        }
+        try {
+            for (int year = currentYear; year <= currentYear + 2; year++) {
+                ensureYear(year);
+            }
+            ensuredThrough = currentYear + 2;
+            log.debug("活动数据表年份已覆盖到 {}（当前年 {} + 2）", ensuredThrough, currentYear);
+        } catch (RuntimeException exception) {
+            log.warn("活动数据表年份延伸失败（当前年 {}）：{}", currentYear, exception.getMessage());
+        }
+    }
+
     public List<Integer> years() {
+        ensureUpcomingYears();
         TreeSet<Integer> years = new TreeSet<>();
         for (DbRow row : db.query("SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE ?",
                 TABLE_PREFIX + "%")) {
@@ -109,6 +133,7 @@ public class ActivityStore {
 
     /** 某年的活动（按分类 + 顺序，排除已删除）。 */
     public List<Map<String, Object>> list(int year) {
+        ensureUpcomingYears();
         ensureYear(year);
         List<Map<String, Object>> rows = new ArrayList<>();
         for (DbRow row : db.query("SELECT * FROM " + tableOf(year)
@@ -121,6 +146,7 @@ public class ActivityStore {
     /** 新增一条活动。 */
     public long add(Viewer viewer, int year, String category, String status, String name,
                     String region, String date, String qq, String comment) {
+        ensureUpcomingYears();
         ensureYear(year);
         String categoryValue = normalizeCategory(category);
         String nameValue = requireName(name);
@@ -140,6 +166,7 @@ public class ActivityStore {
     /** 修改一条活动（整行覆盖）。 */
     public boolean update(Viewer viewer, int year, long id, String category, String status, String name,
                           String region, String date, String qq, String comment) {
+        ensureUpcomingYears();
         ensureYear(year);
         String categoryValue = normalizeCategory(category);
         String nameValue = requireName(name);
