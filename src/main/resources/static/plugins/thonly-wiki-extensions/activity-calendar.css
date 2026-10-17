@@ -292,3 +292,22 @@ body.thonly-calendar-page .thonly-calendar-sep {
     width: 4px;
     height: 4px;
 }
+
+/* 首页 mini-block 卡片：右上角的 Date / Latest 是装饰水印，
+   给日历顶部留出空间，避免粉色月份面板把 Date 遮住。 */
+.mini-block .touhou-calendar {
+    margin-top: 48px;
+}
+
+/* 紧凑日历与卡片同圆角，弱化 evoCalendar 自带的粉色外阴影 */
+.touhou-calendar.calendar-compact {
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 768px) {
+    .mini-block .touhou-calendar {
+        margin-top: 42px;
+    }
+}
