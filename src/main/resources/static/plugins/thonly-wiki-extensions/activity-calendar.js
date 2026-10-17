@@ -80,6 +80,7 @@
         containers.forEach(function (container) {
             container.classList.remove('thonly-calendar-loading');
             container.textContent = '';
+            updateCompactLayout(container);
             jq(container).evoCalendar({
                 theme: null,
                 format: 'yyyy-mm-dd',
@@ -94,7 +95,18 @@
                 eventListToggler: true,
                 calendarEvents: events
             });
+            updateCompactLayout(container);
+            if (window.ResizeObserver) {
+                new ResizeObserver(function () {
+                    updateCompactLayout(container);
+                }).observe(container);
+            }
         });
+    }
+
+    /** 容器窄（首页 mini-block 等）时用紧凑布局：时间/视口断点管不到卡片宽度，必须看容器自身。 */
+    function updateCompactLayout(container) {
+        container.classList.toggle('calendar-compact', container.getBoundingClientRect().width < 760);
     }
 
     function loadYear(year) {

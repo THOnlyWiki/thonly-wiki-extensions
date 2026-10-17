@@ -161,3 +161,134 @@ body.thonly-calendar-page .thonly-calendar-sep {
     min-width: 0;
     overflow-x: auto;
 }
+
+/* ============================================================
+   窄容器紧凑布局（首页 mini-block、卡片等）：
+   evoCalendar 的响应式断点按**视口**写（1280 / 1024 / 768 / 425），
+   但首页卡片只有 400px 左右，视口却是 1440px —— 固定 175/300px 的侧栏与事件面板
+   会把月历挤成一条。activity-calendar.js 用 ResizeObserver 按**容器自身宽度**
+   加 calendar-compact，下面把侧栏、月历、事件面板改成上下堆叠。
+   ============================================================ */
+.touhou-calendar.calendar-compact {
+    min-height: 0;
+}
+
+.touhou-calendar.calendar-compact .calendar-sidebar,
+.touhou-calendar.calendar-compact.sidebar-hide .calendar-sidebar {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    float: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.touhou-calendar.calendar-compact .calendar-sidebar > .calendar-year {
+    padding: 6px 12px;
+}
+
+.touhou-calendar.calendar-compact .calendar-sidebar > .calendar-year > p {
+    font-size: 18px;
+    margin: 0 8px;
+}
+
+.touhou-calendar.calendar-compact .calendar-sidebar > .month-list,
+.touhou-calendar.calendar-compact.sidebar-hide .calendar-sidebar > .month-list {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 116px;
+    overflow-y: auto;
+    background-color: transparent !important;
+    transform: none !important;
+    z-index: auto;
+}
+
+.touhou-calendar.calendar-compact .calendar-sidebar > .month-list > .calendar-months {
+    position: static !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2px;
+    padding: 4px !important;
+}
+
+.touhou-calendar.calendar-compact .calendar-sidebar > .month-list > .calendar-months > li {
+    padding: 5px 2px !important;
+    font-size: 12px;
+    text-align: center;
+}
+
+.touhou-calendar.calendar-compact .calendar-sidebar > span#sidebarToggler,
+.touhou-calendar.calendar-compact #eventListToggler {
+    display: none !important;
+}
+
+.touhou-calendar.calendar-compact .calendar-inner {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    padding: 4px 4px 10px !important;
+    float: none !important;
+    box-shadow: none !important;
+    overflow-x: hidden;
+}
+
+.touhou-calendar.calendar-compact .calendar-inner::after {
+    content: none !important;
+    opacity: 0 !important;
+}
+
+.touhou-calendar.calendar-compact .calendar-events,
+.touhou-calendar.calendar-compact.event-hide .calendar-events {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 280px;
+    padding: 10px 12px !important;
+    transform: none !important;
+    box-shadow: none !important;
+    overflow-y: auto;
+    z-index: auto !important;
+}
+
+.touhou-calendar.calendar-compact .calendar-events > .event-header > p {
+    margin: 0 0 6px;
+    font-size: 18px;
+}
+
+.touhou-calendar.calendar-compact .calendar-table {
+    display: table !important;
+    width: 100% !important;
+    table-layout: fixed;
+    font-size: 14px;
+}
+
+.touhou-calendar.calendar-compact tr.calendar-header .calendar-header-day {
+    padding: 4px 0 !important;
+    font-size: 12px;
+}
+
+.touhou-calendar.calendar-compact tr.calendar-body .calendar-day {
+    padding: 2px 0 !important;
+}
+
+.touhou-calendar.calendar-compact tr.calendar-body .calendar-day .day {
+    width: auto !important;
+    height: auto !important;
+    min-width: 24px;
+    min-height: 28px;
+    margin: 0 auto;
+    padding: 5px 0 !important;
+    font-size: 13px;
+}
+
+.touhou-calendar.calendar-compact .event-indicator {
+    transform: translate(-50%, calc(-100% + 2px)) !important;
+}
+
+.touhou-calendar.calendar-compact .event-indicator > .type-bullet > div {
+    width: 4px;
+    height: 4px;
+}
