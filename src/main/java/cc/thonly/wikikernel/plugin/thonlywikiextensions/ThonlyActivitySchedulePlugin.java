@@ -1,7 +1,17 @@
 package cc.thonly.wikikernel.plugin.thonlywikiextensions;
 
+import cc.thonly.wikikernel.common.extension.HtmlHeadProvider;
+import cc.thonly.wikikernel.common.extension.PageDisplayHook;
+import cc.thonly.wikikernel.common.extension.ParserTag;
+import cc.thonly.wikikernel.common.plugin.PluginContext;
 import cc.thonly.wikikernel.common.plugin.PluginDescriptor;
 import cc.thonly.wikikernel.common.plugin.WikiPlugin;
+import cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.ActivityHeadProvider;
+import cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.ActivityPageHook;
+import cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.CalendarHeadProvider;
+import cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.CalendarPageHook;
+import cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.MapPageHook;
+import cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.TouhouCalendarTag;
 
 /**
  * {@code thonly-wiki-extensions} 扩展（移植自 {@code thonly.cc/excel} 的「全国东方Project线下活动表格」）：
@@ -15,9 +25,9 @@ import cc.thonly.wikikernel.common.plugin.WikiPlugin;
  *         对「线下活动速查表」有 {@code edit} 权限（走 core 访问控制；**默认就是「登录用户」**，
  *         不需要管理员，可在 特殊:权限配置 里按用户组动态调整，例如只放给「管理员」或某个自定义组）；
  *         每次修改都会写一条日志（类型 {@code edit}、目标「线下活动速查表」），因此**最近更改里能看见**；</li>
- *     <li>页面：{@code /wiki/线下活动速查表} 由 {@link cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.ActivityPageHook}
+ *     <li>页面：{@code /wiki/线下活动速查表} 由 {@link ActivityPageHook}
  *         接管正文渲染（无论该页是否已创建都不会 404），编辑（文字「编辑」链接 / 「添加活动」）都是弹窗，
- *         变更历史也可回滚；样式与脚本由 {@link cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.ActivityHeadProvider}
+ *         变更历史也可回滚；样式与脚本由 {@link ActivityHeadProvider}
  *         注入；{@code /excel} 是与线上一致的独立只读页面（无 wiki 布局）；</li>
  *     <li>日历：{@code /excel/calendar/<年>/<id>.ics} 下载全天事件（手机 / 电脑通用，每行「操作」列的
  *         「加入日历」）；不再有 Google 链接。</li>
@@ -42,31 +52,31 @@ public class ThonlyActivitySchedulePlugin implements WikiPlugin {
 
     /** 页面正文接管（注册为扩展点，参见 PLUGIN-DEV：@Component 只是 Spring Bean，扩展要 context.register）。 */
     @org.springframework.beans.factory.annotation.Autowired
-    private cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.ActivityPageHook pageHook;
+    private ActivityPageHook pageHook;
 
     /** 「活动分布地图」页面正文接管（ECharts 中国地图，不嵌 iframe）。 */
     @org.springframework.beans.factory.annotation.Autowired
-    private cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.MapPageHook mapPageHook;
+    private MapPageHook mapPageHook;
 
     /** 「活动日历」页面正文接管（本地 evoCalendar，不嵌 iframe）。 */
     @org.springframework.beans.factory.annotation.Autowired
-    private cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.CalendarPageHook calendarPageHook;
+    private CalendarPageHook calendarPageHook;
 
     @Override
-    public void onStart(cc.thonly.wikikernel.common.plugin.PluginContext context) {
-        context.register(cc.thonly.wikikernel.common.extension.PageDisplayHook.class, pageHook);
-        context.register(cc.thonly.wikikernel.common.extension.PageDisplayHook.class, mapPageHook);
-        context.register(cc.thonly.wikikernel.common.extension.PageDisplayHook.class, calendarPageHook);
+    public void onStart(PluginContext context) {
+        context.register(PageDisplayHook.class, pageHook);
+        context.register(PageDisplayHook.class, mapPageHook);
+        context.register(PageDisplayHook.class, calendarPageHook);
         // <touhou-calendar />：任何页面写上就渲染活动日历（渲染时写页面属性，head 按属性注入资源）
-        context.register(cc.thonly.wikikernel.common.extension.ParserTag.class,
-                new cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.TouhouCalendarTag());
+        context.register(ParserTag.class,
+                new TouhouCalendarTag());
         // 样式 / 脚本必须走 HtmlHeadProvider（siteWide + 标题过滤）：
         // PageDisplayHook#headItems 在「页面不存在」的接管路径里不会被注入（踩过坑）
-        context.register(cc.thonly.wikikernel.common.extension.HtmlHeadProvider.class,
-                new cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.ActivityHeadProvider());
+        context.register(HtmlHeadProvider.class,
+                new ActivityHeadProvider());
         // 用到 <touhou-calendar /> 的普通页面：按页面属性注入日历资源（页面级 provider 才能读到属性）
-        context.register(cc.thonly.wikikernel.common.extension.HtmlHeadProvider.class,
-                new cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.CalendarHeadProvider());
+        context.register(HtmlHeadProvider.class,
+                new CalendarHeadProvider());
     }
 
     @Override

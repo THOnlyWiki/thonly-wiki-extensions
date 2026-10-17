@@ -3,6 +3,7 @@ package cc.thonly.wikikernel.plugin.thonlywikiextensions.hook;
 import cc.thonly.wikikernel.common.extension.PageDisplayContext;
 import cc.thonly.wikikernel.common.extension.PageDisplayHook;
 import cc.thonly.wikikernel.plugin.thonlywikiextensions.ThonlyActivitySchedulePlugin;
+import cc.thonly.wikikernel.plugin.thonlywikiextensions.web.CalendarStandaloneController;
 import org.springframework.stereotype.Component;
 
 /**
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component;
  * <p>
  * 页面不需要写任何标签；其它页面想嵌日历用 {@code <touhou-calendar />} 标签（见
  * {@link TouhouCalendarTag}），独立整页用 {@code /calendar}（见
- * {@link cc.thonly.wikikernel.plugin.thonlywikiextensions.web.CalendarStandaloneController}）。
+ * {@link CalendarStandaloneController}）。
  */
 @Component
 public class CalendarPageHook implements PageDisplayHook {

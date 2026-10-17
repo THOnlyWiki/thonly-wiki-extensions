@@ -3,6 +3,7 @@ package cc.thonly.wikikernel.plugin.thonlywikiextensions.hook;
 import cc.thonly.wikikernel.common.access.AccessAction;
 import cc.thonly.wikikernel.common.extension.PageDisplayContext;
 import cc.thonly.wikikernel.common.extension.PageDisplayHook;
+import cc.thonly.wikikernel.common.service.AccessCheck;
 import cc.thonly.wikikernel.plugin.thonlywikiextensions.ThonlyActivitySchedulePlugin;
 import cc.thonly.wikikernel.plugin.thonlywikiextensions.service.ActivityStore;
 import cc.thonly.wikikernel.plugin.thonlywikiextensions.service.CalendarLinks;
@@ -36,7 +37,7 @@ public class ActivityPageHook implements PageDisplayHook {
     private ActivityStore store;
 
     @Autowired
-    private cc.thonly.wikikernel.common.service.AccessCheck accessCheck;
+    private AccessCheck accessCheck;
 
     @Override
     public int order() {
