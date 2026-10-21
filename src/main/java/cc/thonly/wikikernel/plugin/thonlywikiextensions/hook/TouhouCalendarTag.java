@@ -5,7 +5,7 @@ import cc.thonly.wikikernel.common.extension.ParserTagCall;
 
 /**
  * {@code <touhou-calendar />} 解析标签：任何页面写上它就渲染「活动日历」
- * （本地内置的 evoCalendar，数据来自本站活动表，不再依赖 Google 表格）。
+ * （本地内置的原生日历，数据来自本站活动表，不依赖第三方日历库与 Google 表格）。
  * <p>
  * 渲染结果只是一个容器（{@code div[data-touhou-calendar]}），真正的内容由
  * {@code activity-calendar.js} 拉数据后初始化；标签同时往页面属性写

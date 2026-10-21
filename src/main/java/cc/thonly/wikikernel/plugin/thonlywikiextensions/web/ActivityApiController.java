@@ -63,6 +63,7 @@ public class ActivityApiController {
         data.put("years", years);
         data.put("categories", ActivityStore.CATEGORIES);
         data.put("canEdit", accessCheck.can(AccessAction.EDIT, PAGE_TITLE, viewer));
+        data.put("loggedIn", viewer.loggedIn());
         return ResponseEntity.ok(data);
     }
 
@@ -82,6 +83,7 @@ public class ActivityApiController {
         data.put("years", store.years());
         data.put("categories", ActivityStore.CATEGORIES);
         data.put("canEdit", accessCheck.can(AccessAction.EDIT, PAGE_TITLE, viewer));
+        data.put("loggedIn", viewer.loggedIn());
         data.put("rows", rows);
         return ResponseEntity.ok(data);
     }

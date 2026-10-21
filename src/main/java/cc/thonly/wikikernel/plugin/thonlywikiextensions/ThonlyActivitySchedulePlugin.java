@@ -12,6 +12,8 @@ import cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.CalendarHeadProvide
 import cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.CalendarPageHook;
 import cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.MapPageHook;
 import cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.TouhouCalendarTag;
+import cc.thonly.wikikernel.plugin.thonlywikiextensions.pagegenerator.PageGeneratorHeadProvider;
+import cc.thonly.wikikernel.plugin.thonlywikiextensions.pagegenerator.PageGeneratorPageHook;
 
 /**
  * {@code thonly-wiki-extensions} 扩展（移植自 {@code thonly.cc/excel} 的「全国东方Project线下活动表格」）：
@@ -43,7 +45,7 @@ public class ThonlyActivitySchedulePlugin implements WikiPlugin {
     /** 活动分布地图页面标题（正文接管：不嵌 iframe，直接用本地 ECharts 画）。 */
     public static final String MAP_PAGE_TITLE = "活动分布地图";
 
-    /** 活动日历页面标题（正文接管：不嵌 iframe，直接用本地 evoCalendar 渲染）。
+    /** 活动日历页面标题（正文接管：不嵌 iframe，直接用本地原生日历渲染）。
      *  其它页面用解析标签 {@code <touhou-calendar />} 嵌入日历，独立整页是 {@code /calendar}。 */
     public static final String CALENDAR_PAGE_TITLE = "活动日历";
 
@@ -58,15 +60,21 @@ public class ThonlyActivitySchedulePlugin implements WikiPlugin {
     @org.springframework.beans.factory.annotation.Autowired
     private MapPageHook mapPageHook;
 
-    /** 「活动日历」页面正文接管（本地 evoCalendar，不嵌 iframe）。 */
+    /** 「活动日历」页面正文接管（本地原生日历，不嵌 iframe）。 */
     @org.springframework.beans.factory.annotation.Autowired
     private CalendarPageHook calendarPageHook;
+
+    /** 活动页面生成器（快速创建页面 / 快速创建子页面）。 */
+    @org.springframework.beans.factory.annotation.Autowired
+    private PageGeneratorPageHook pageGeneratorPageHook;
 
     @Override
     public void onStart(PluginContext context) {
         context.register(PageDisplayHook.class, pageHook);
         context.register(PageDisplayHook.class, mapPageHook);
         context.register(PageDisplayHook.class, calendarPageHook);
+        context.register(PageDisplayHook.class, pageGeneratorPageHook);
+        context.register(HtmlHeadProvider.class, new PageGeneratorHeadProvider());
         // <touhou-calendar />：任何页面写上就渲染活动日历（渲染时写页面属性，head 按属性注入资源）
         context.register(ParserTag.class,
                 new TouhouCalendarTag());
@@ -83,6 +91,7 @@ public class ThonlyActivitySchedulePlugin implements WikiPlugin {
     public PluginDescriptor descriptor() {
         return new PluginDescriptor("thonly-wiki-extensions", "Thonly Wiki Extensions", "1.0.0",
                 "全国东方Project线下活动速查表（分年份数据表 + 变更回溯 + 最近更改日志 + /excel 独立页 + 日历导出 "
-                        + "+ 活动分布地图 + 活动日历 <touhou-calendar /> 与 /calendar 独立页）");
+                        + "+ 活动分布地图 + 活动日历 <touhou-calendar /> 与 /calendar 独立页 + 页面生成器）");
     }
 }
+

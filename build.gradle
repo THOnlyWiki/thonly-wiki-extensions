@@ -11,6 +11,7 @@ dependencies {
     compileOnly 'org.springframework:spring-web'
     compileOnly 'org.springframework.boot:spring-boot-starter-webmvc'
     compileOnly 'org.slf4j:slf4j-api'
+    compileOnly 'tools.jackson.core:jackson-databind'
 
     testImplementation project(':common')
     testImplementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")

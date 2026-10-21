@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <!-- 独立页 /calendar —— 对应线上 thonly.cc/calendar/ 的整页活动日历（无 wiki 布局、无 iframe）：
-     本地 evoCalendar + 本站活动表数据 -->
+     本地原生活动日历 + 本站活动表数据 -->
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title th:text="${pageTitle}">东方Project线下活动日程信息</title>
-    <link rel="stylesheet" th:href="@{/plugins/thonly-wiki-extensions/calendar/evo-calendar.css}"/>
     <link rel="stylesheet" th:href="@{/plugins/thonly-wiki-extensions/activity-calendar.css}"/>
     <meta name="robots" content="noindex"/>
 </head>
@@ -26,8 +25,6 @@
         <div class="touhou-calendar" data-touhou-calendar="1"></div>
     </div>
 </div>
-<script th:src="@{/vendor/jquery/jquery.min.js}"></script>
-<script th:src="@{/plugins/thonly-wiki-extensions/calendar/evo-calendar.js}"></script>
 <script th:src="@{/plugins/thonly-wiki-extensions/activity-calendar.js}"></script>
 </body>
 </html>

@@ -1,313 +1,1089 @@
 /*
- * 「活动日历」样式：evoCalendar 本体样式在 calendar/evo-calendar.css（照源站打包），
- * 这里只做三处集成的尺寸与外观微调。
+ * 「活动日历」样式（纯原生日历，无 evoCalendar 依赖）。
+ *
+ * 三种用法共用：
+ *   - wiki 页面 / 标签：受站点皮肤影响，使用主题变量；
+ *   - 独立页 /calendar：自带完整页面外观；
+ *   - 首页 mini-block 等窄容器：由 JS 加 .thc-compact / .thc-narrow，切换为紧凑日历。
  */
 
-/* 通用容器：三种用法（标签 / 页面接管 / 独立页）共用 */
 .touhou-calendar {
-    min-height: 640px;
+    --thc-accent: var(--color-primary, #d8638c);
+    --thc-accent-strong: #b84c71;
+    --thc-accent-soft: #fceef3;
+    --thc-bg: var(--background-color-base, #fff);
+    --thc-bg-soft: #fafbfc;
+    --thc-bg-hover: #f4f6f8;
+    --thc-text: var(--color-base, #202122);
+    --thc-muted: var(--color-subtle, #72777d);
+    --thc-border: var(--border-color-subtle, #e1e5e8);
+    --thc-border-strong: var(--border-color-base, #c8ccd1);
+    --thc-radius: 12px;
+    min-height: 0;
+    color: var(--thc-text);
+    font-size: 15px;
+    line-height: 1.5;
 }
 
-/* 加载中 / 加载失败：给一块浅色占位，避免页面先闪一大片空白 */
-.touhou-calendar.thonly-calendar-loading {
+.skin-timeless-dark .touhou-calendar {
+    --thc-accent-strong: #f08bb0;
+    --thc-accent-soft: #3b2832;
+    --thc-bg: #202124;
+    --thc-bg-soft: #282a2e;
+    --thc-bg-hover: #303238;
+    --thc-text: #eaecf0;
+    --thc-muted: #a2a9b1;
+    --thc-border: #3b3e43;
+    --thc-border-strong: #54595d;
+}
+
+/* 加载中 / 加载失败 */
+.touhou-calendar.thc-loading-state,
+.touhou-calendar.thc-error-state {
     display: flex;
     min-height: 320px;
     align-items: center;
     justify-content: center;
-    border: 1px dashed #c8ccd1;
-    border-radius: 4px;
-    background: #fbfbfb;
-    color: #72777d;
+    border: 1px dashed var(--thc-border-strong, #c8ccd1);
+    border-radius: var(--thc-radius);
+    background: var(--thc-bg-soft, #fbfbfb);
+    color: var(--thc-muted, #72777d);
 }
 
-/* wiki 页面（标签 / 正文接管）：提示行 + 日历之间的间距 */
-.thonly-calendar-app .thonly-calendar-hint {
+.thc-error {
+    padding: 24px;
+    text-align: center;
+}
+
+.thc-error p {
     margin: 0 0 10px;
-    color: #54595d;
-    font-size: 0.9em;
 }
 
+.thc-error button,
+.thc-nav-btn,
+.thc-today,
+.thc-upcoming-item,
+.thc-day {
+    margin: 0;
+    box-shadow: none;
+    font: inherit;
+    transform: none;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.thc-error button {
+    padding: 6px 14px;
+    border: 1px solid var(--thc-accent, #d8638c);
+    border-radius: 6px;
+    background: var(--thc-accent-soft, #fceef3);
+    color: var(--thc-accent-strong, #b84c71);
+    cursor: pointer;
+    font-weight: 700;
+}
+
+/* 日历外壳 */
+.thc {
+    overflow: hidden;
+    border: 1px solid var(--thc-border, #e1e5e8);
+    border-radius: var(--thc-radius);
+    background: var(--thc-bg, #fff);
+    box-shadow: 0 2px 10px rgba(24, 39, 52, 0.05);
+}
+
+/* 顶部工具栏 */
+.thc-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--thc-border, #e1e5e8);
+    background: linear-gradient(180deg, var(--thc-bg, #fff), var(--thc-bg-soft, #fafbfc));
+}
+
+.thc-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.thc .thc-title::after,
+.mw-body .thc .thc-title::after {
+    content: none;
+    display: none;
+    border: 0;
+}
+
+.thc .thc-title {
+    min-width: 7.4em;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: var(--thc-text, #202122);
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.thc-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid var(--thc-border, #e1e5e8);
+    border-radius: 8px;
+    background: var(--thc-bg, #fff);
+    color: var(--thc-text, #202122);
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.thc-nav-btn:hover {
+    border-color: var(--thc-accent, #d8638c);
+    background: var(--thc-accent-soft, #fceef3);
+    color: var(--thc-accent-strong, #b84c71);
+}
+
+.thc-nav-btn:focus-visible,
+.thc-today:focus-visible,
+.thc-day:focus-visible,
+.thc-upcoming-item:focus-visible,
+.thc-select:focus-visible,
+.thc-error button:focus-visible {
+    outline: 2px solid var(--thc-accent, #d8638c);
+    outline-offset: 1px;
+}
+
+.thc-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.thc-select {
+    box-sizing: border-box;
+    height: 34px;
+    padding: 0 26px 0 10px;
+    border: 1px solid var(--thc-border, #e1e5e8);
+    border-radius: 8px;
+    background-color: var(--thc-bg, #fff);
+    color: var(--thc-text, #202122);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.thc-today {
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid var(--thc-accent, #d8638c);
+    border-radius: 8px;
+    background: var(--thc-accent-soft, #fceef3);
+    color: var(--thc-accent-strong, #b84c71);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.thc-today:hover {
+    background: var(--thc-accent, #d8638c);
+    color: #fff;
+}
+
+/* 左右结构：日历 + 当天活动 */
+.thc-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 310px;
+    align-items: stretch;
+}
+
+.thc-calendar {
+    min-width: 0;
+    padding: 10px 12px 14px;
+}
+
+.thc-weekdays,
+.thc-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.thc-weekdays {
+    border-bottom: 1px solid var(--thc-border, #e1e5e8);
+}
+
+.thc-weekday {
+    padding: 7px 2px;
+    overflow: hidden;
+    color: var(--thc-muted, #72777d);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.thc-grid {
+    overflow: hidden;
+    border-top: 1px solid var(--thc-border, #e1e5e8);
+    border-left: 1px solid var(--thc-border, #e1e5e8);
+    border-radius: 8px;
+    background: var(--thc-bg, #fff);
+}
+
+.thc-cell {
+    min-width: 0;
+    border-right: 1px solid var(--thc-border, #e1e5e8);
+    border-bottom: 1px solid var(--thc-border, #e1e5e8);
+}
+
+.thc-cell:nth-child(7n) {
+    border-right: 0;
+}
+
+.thc-cell-empty {
+    min-height: 96px;
+    background: var(--thc-bg-soft, #fafbfc);
+}
+
+.thc-day {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 96px;
+    padding: 7px 7px 8px;
+    overflow: hidden;
+    border-top: 0;
+    border-left: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s ease;
+}
+
+.thc-day:hover {
+    background: var(--thc-bg-hover, #f4f6f8);
+}
+
+.thc-day.thc-weekend .thc-daynum {
+    color: var(--thc-accent-strong, #b84c71);
+}
+
+.thc-day.thc-selected {
+    background: var(--thc-accent-soft, #fceef3);
+    box-shadow: inset 0 0 0 2px var(--thc-accent, #d8638c);
+}
+
+.thc-day.thc-today .thc-daynum {
+    border-radius: 50%;
+    background: var(--thc-accent, #d8638c);
+    color: #fff;
+}
+
+.thc-day.thc-today.thc-selected .thc-daynum {
+    background: var(--thc-accent-strong, #b84c71);
+}
+
+.thc-daynum {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    color: var(--thc-text, #202122);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.thc-daychips {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.thc-chip {
+    display: block;
+    max-width: 100%;
+    padding: 2px 5px;
+    overflow: hidden;
+    border-left: 3px solid var(--thc-cat, var(--thc-accent, #d8638c));
+    border-radius: 3px;
+    background: var(--thc-cat-bg, #fceef3);
+    color: var(--thc-cat-text, #8f3654);
+    font-size: 11px;
+    line-height: 1.45;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.thc-cancelled {
+    opacity: 0.62;
+    text-decoration: line-through;
+}
+
+.thc-more {
+    color: var(--thc-muted, #72777d);
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.thc-dots {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 3px;
+    min-height: 8px;
+}
+
+.thc-dot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--thc-cat, var(--thc-accent, #d8638c));
+}
+
+/* 分类色（THO / THP / 校联 / Live） */
+.thc-cat-tho {
+    --thc-cat: #d8638c;
+    --thc-cat-bg: #fceef3;
+    --thc-cat-text: #8f3654;
+}
+
+.thc-cat-thp {
+    --thc-cat: #4f7fc9;
+    --thc-cat-bg: #edf3fc;
+    --thc-cat-text: #315b9d;
+}
+
+.thc-cat-school {
+    --thc-cat: #3f9d73;
+    --thc-cat-bg: #ebf7f1;
+    --thc-cat-text: #286c4e;
+}
+
+.thc-cat-live {
+    --thc-cat: #c47a2c;
+    --thc-cat-bg: #fdf3e8;
+    --thc-cat-text: #8a5319;
+}
+
+.thc-cat-other {
+    --thc-cat: #8a7f8a;
+    --thc-cat-bg: #f4f2f4;
+    --thc-cat-text: #635a63;
+}
+
+/* 右侧 / 下方活动详情 */
+.thc-side {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    max-height: 640px;
+    padding: 14px;
+    overflow-y: auto;
+    border-left: 1px solid var(--thc-border, #e1e5e8);
+    background: var(--thc-bg-soft, #fafbfc);
+}
+
+.thc-side-head {
+    padding-bottom: 2px;
+}
+
+.thc-side-date {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    color: var(--thc-text, #202122);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.thc-today-badge {
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--thc-accent-soft, #fceef3);
+    color: var(--thc-accent-strong, #b84c71);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.thc-side-count {
+    margin-top: 2px;
+    color: var(--thc-muted, #72777d);
+    font-size: 12px;
+}
+
+.thc-event {
+    padding: 11px 12px;
+    border: 1px solid var(--thc-border, #e1e5e8);
+    border-radius: 9px;
+    background: var(--thc-bg, #fff);
+    box-shadow: 0 1px 2px rgba(24, 39, 52, 0.04);
+}
+
+.thc-event-title {
+    color: var(--thc-text, #202122);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.thc-event-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px 8px;
+    margin-top: 7px;
+    color: var(--thc-muted, #72777d);
+    font-size: 12px;
+}
+
+.thc-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--thc-cat-bg, #fceef3);
+    color: var(--thc-cat-text, #8f3654);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.thc-status-cancelled {
+    color: #b33a3a;
+    font-weight: 700;
+}
+
+.thc-event-qq {
+    margin-top: 6px;
+    color: var(--thc-muted, #72777d);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.thc-event-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.thc-event-link,
+.thc-event-edit {
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: 26px;
+    padding: 3px 8px;
+    border: 1px solid var(--thc-border-strong, #c8ccd1);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--thc-accent-strong, #b84c71);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: none;
+}
+
+.thc-event-link:hover,
+.thc-event-edit:hover {
+    border-color: var(--thc-accent, #d8638c);
+    background: var(--thc-accent-soft, #fceef3);
+    text-decoration: none;
+}
+
+.thc-event-edit {
+    border-color: var(--thc-accent, #d8638c);
+    background: var(--thc-accent-soft, #fceef3);
+}
+
+.thc-event-edit:focus-visible {
+    outline: 2px solid var(--thc-accent, #d8638c);
+    outline-offset: 1px;
+}
+
+/* ==================== 右键菜单 / 编辑弹窗 / 保存提示 ==================== */
+body.thc-modal-open {
+    overflow: hidden;
+}
+
+.thc-menu {
+    position: fixed;
+    z-index: 2200;
+    box-sizing: border-box;
+    min-width: 220px;
+    max-width: min(340px, calc(100vw - 16px));
+    padding: 5px;
+    border: 1px solid #dfe3e6;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(18, 28, 38, 0.18);
+}
+
+.thc-menu-title {
+    padding: 7px 9px;
+    border-bottom: 1px solid #edf0f2;
+    color: #72777d;
+    font-size: 12px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.thc-menu-item {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 8px 9px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #202122;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.4;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.thc-menu-item:hover,
+.thc-menu-item:focus-visible {
+    background: #fceef3;
+    color: #b84c71;
+    outline: 0;
+}
+
+.thc-menu-item.is-cancelled {
+    opacity: 0.65;
+    text-decoration: line-through;
+}
+
+.thc-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 20px;
+    background: rgba(16, 24, 32, 0.52);
+}
+
+.thc-modal {
+    box-sizing: border-box;
+    width: min(560px, 100%);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    border: 1px solid #e1e5e8;
+    border-radius: 14px;
+    background: #fff;
+    color: #202122;
+    box-shadow: 0 18px 50px rgba(12, 20, 28, 0.25);
+}
+
+.thc-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 16px 18px 10px;
+}
+
+.thc-modal-head h2 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: #202122;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.thc-modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    color: #72777d;
+    cursor: pointer;
+    font: inherit;
+    font-size: 22px;
+    line-height: 1;
+}
+
+.thc-modal-close:hover {
+    background: #f4f6f8;
+    color: #202122;
+}
+
+.thc-modal-form {
+    padding: 0 18px 18px;
+}
+
+.thc-modal-subtitle {
+    margin: 0 0 14px;
+    color: #72777d;
+    font-size: 12px;
+}
+
+.thc-modal-grid {
+    display: grid;
+    grid-template-columns: 90px minmax(0, 1fr);
+    gap: 10px 12px;
+    align-items: center;
+}
+
+.thc-modal-grid label {
+    color: #54595d;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.thc-modal-grid input,
+.thc-modal-grid select {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 34px;
+    padding: 6px 9px;
+    border: 1px solid #c8ccd1;
+    border-radius: 7px;
+    background: #fff;
+    color: #202122;
+    font: inherit;
+    font-size: 14px;
+}
+
+.thc-modal-grid input:focus,
+.thc-modal-grid select:focus {
+    border-color: #d8638c;
+    outline: 2px solid #d8638c;
+    outline-offset: -1px;
+}
+
+.thc-modal-error {
+    margin: 12px 0 0;
+    padding: 8px 10px;
+    border: 1px solid #d33;
+    border-radius: 6px;
+    background: #fee7e6;
+    color: #b32424;
+    font-size: 12px;
+}
+
+.thc-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.thc-modal-button {
+    min-height: 34px;
+    margin: 0;
+    padding: 6px 16px;
+    border: 1px solid #c8ccd1;
+    border-radius: 7px;
+    background: #f8f9fa;
+    color: #202122;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: none;
+    transform: none;
+}
+
+.thc-modal-button:hover {
+    background: #eaecf0;
+}
+
+.thc-modal-button.thc-modal-primary {
+    border-color: #d8638c;
+    background: #d8638c;
+    color: #fff;
+}
+
+.thc-modal-button.thc-modal-primary:hover {
+    border-color: #b84c71;
+    background: #b84c71;
+}
+
+.thc-modal-button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.thc-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    z-index: 2400;
+    max-width: calc(100vw - 32px);
+    padding: 9px 16px;
+    border-radius: 8px;
+    background: #333;
+    color: #fff;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 8px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.thc-toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.skin-timeless-dark .thc-menu,
+.skin-timeless-dark .thc-modal {
+    border-color: #3b3e43;
+    background: #202124;
+    color: #eaecf0;
+}
+
+.skin-timeless-dark .thc-menu-title {
+    border-bottom-color: #3b3e43;
+    color: #a2a9b1;
+}
+
+.skin-timeless-dark .thc-menu-item {
+    color: #eaecf0;
+}
+
+.skin-timeless-dark .thc-menu-item:hover,
+.skin-timeless-dark .thc-menu-item:focus-visible {
+    background: #3b2832;
+    color: #f08bb0;
+}
+
+.skin-timeless-dark .thc-modal-head h2 {
+    color: #eaecf0;
+}
+
+.skin-timeless-dark .thc-modal-grid label,
+.skin-timeless-dark .thc-modal-subtitle {
+    color: #a2a9b1;
+}
+
+.skin-timeless-dark .thc-modal-grid input,
+.skin-timeless-dark .thc-modal-grid select {
+    border-color: #54595d;
+    background: #282a2e;
+    color: #eaecf0;
+}
+
+.skin-timeless-dark .thc-modal-button {
+    border-color: #54595d;
+    background: #303238;
+    color: #eaecf0;
+}
+
+@media (max-width: 560px) {
+    .thc-modal-overlay {
+        align-items: flex-end;
+        padding: 8px;
+    }
+
+    .thc-modal {
+        max-height: calc(100vh - 16px);
+        border-radius: 12px;
+    }
+
+    .thc-modal-grid {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+
+    .thc-modal-grid label:not(:first-child) {
+        margin-top: 4px;
+    }
+
+    .thc-modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .thc-modal-button {
+        width: 100%;
+    }
+
+    .thc-menu {
+        max-width: calc(100vw - 16px);
+    }
+}
+
+.thc-cancelled-event {
+    opacity: 0.78;
+}
+
+.thc-empty {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 12px;
+    border: 1px dashed var(--thc-border-strong, #c8ccd1);
+    border-radius: 9px;
+    background: var(--thc-bg, #fff);
+    color: var(--thc-muted, #72777d);
+    text-align: center;
+}
+
+.thc-empty strong {
+    color: var(--thc-text, #202122);
+    font-size: 14px;
+}
+
+.thc-empty span {
+    font-size: 12px;
+}
+
+.thc-upcoming {
+    padding-top: 2px;
+}
+
+.thc-upcoming h3 {
+    margin: 0 0 4px;
+    padding: 0;
+    border: 0;
+    color: var(--thc-muted, #72777d);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.thc-upcoming-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 4px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--thc-text, #202122);
+    cursor: pointer;
+    text-align: left;
+}
+
+.thc-upcoming-item:hover {
+    background: var(--thc-bg-hover, #f4f6f8);
+}
+
+.thc-upcoming-date {
+    flex: 0 0 auto;
+    min-width: 38px;
+    color: var(--thc-accent-strong, #b84c71);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.thc-upcoming-name {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 容器不够宽：右侧活动面板移到下方 */
+.thc-narrow .thc-layout {
+    grid-template-columns: 1fr;
+}
+
+.thc-narrow .thc-side {
+    max-height: none;
+    border-top: 1px solid var(--thc-border, #e1e5e8);
+    border-left: 0;
+}
+
+/* 更窄的卡片 / 手机：日期格只显示数字和圆点 */
+.thc-compact .thc-toolbar {
+    gap: 6px;
+    padding: 8px;
+}
+
+.thc-compact .thc-title {
+    min-width: 6.8em;
+    font-size: 16px;
+}
+
+.thc-compact .thc-nav-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    font-size: 19px;
+}
+
+.thc-compact .thc-select,
+.thc-compact .thc-today {
+    height: 30px;
+    border-radius: 7px;
+    font-size: 12px;
+}
+
+.thc-compact .thc-calendar {
+    padding: 6px;
+}
+
+.thc-compact .thc-weekday {
+    padding: 4px 0;
+    font-size: 11px;
+}
+
+.thc-compact .thc-cell-empty,
+.thc-compact .thc-day {
+    min-height: 48px;
+}
+
+.thc-compact .thc-day {
+    align-items: center;
+    gap: 2px;
+    padding: 3px 2px;
+    text-align: center;
+}
+
+.thc-compact .thc-daynum {
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+}
+
+.thc-compact .thc-daychips {
+    display: none;
+}
+
+.thc-compact .thc-dots {
+    display: flex;
+}
+
+.thc-compact .thc-side {
+    padding: 10px;
+}
+
+/* wiki 页面里的容器 */
 .thonly-calendar-app .touhou-calendar {
     margin: 0 0 12px;
 }
 
-/* 独立页 /calendar：浅灰底 + 居中卡片，与 /excel 独立页同一观感 */
+/* 独立页 /calendar */
 body.thonly-calendar-page {
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
-    color: #333;
-    font-family: '-apple-system', 'BlinkMacSystemFont', 'PingFang SC', 'Segoe UI Variable Display', 'Roboto',
+    background: #f4f6f8;
+    color: #202122;
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI Variable Display', 'Roboto',
     'Helvetica Neue', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Yu Gothic UI', sans-serif;
 }
 
 body.thonly-calendar-page .thonly-calendar-shell {
     box-sizing: border-box;
-    width: 90%;
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 20px;
-    border-radius: 8px;
+    width: min(1180px, calc(100% - 32px));
+    margin: 32px auto;
+    padding: 18px;
+    border-radius: 14px;
     background: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 18px rgba(24, 39, 52, 0.08);
+}
+
+body.thonly-calendar-page .thonly-calendar-head {
+    margin-bottom: 14px;
 }
 
 body.thonly-calendar-page .thonly-calendar-head h1 {
     margin: 0 0 6px;
-    font-size: 28px;
+    color: #333;
+    font-size: 26px;
+    line-height: 1.3;
     text-align: center;
-    color: #444;
 }
 
 body.thonly-calendar-page .thonly-calendar-head p {
-    margin: 0 0 16px;
+    margin: 0;
     text-align: center;
 }
 
 body.thonly-calendar-page .thonly-calendar-head a {
-    color: #007bff;
-    font-weight: bold;
+    display: inline-block;
+    padding: 3px 7px;
+    border-radius: 5px;
+    color: #b84c71;
+    font-weight: 700;
     text-decoration: none;
-    border-radius: 4px;
-    padding: 4px 8px;
 }
 
 body.thonly-calendar-page .thonly-calendar-head a:hover {
-    color: #0056b3;
-    background-color: #e7f0ff;
+    background: #fceef3;
 }
 
 body.thonly-calendar-page .thonly-calendar-sep {
     margin: 0 4px;
-    color: #c8ccd1;
+    color: #a2a9b1;
+}
+
+body.thonly-calendar-page .touhou-calendar {
+    --thc-bg: #fff;
+    --thc-bg-soft: #fafbfc;
+    --thc-bg-hover: #f4f6f8;
+    --thc-text: #202122;
+    --thc-muted: #72777d;
+    --thc-border: #e1e5e8;
+    --thc-border-strong: #c8ccd1;
 }
 
 @media (max-width: 768px) {
     body.thonly-calendar-page .thonly-calendar-shell {
         width: 100%;
         margin: 0;
-        padding: 12px;
+        padding: 10px;
         border-radius: 0;
         box-shadow: none;
     }
 
     body.thonly-calendar-page .thonly-calendar-head h1 {
-        font-size: 22px;
+        font-size: 21px;
     }
 
     .touhou-calendar {
-        min-height: 0;
+        font-size: 14px;
     }
 }
 
-/* ============================================================
-   重叠修复：evoCalendar 自带的响应式断点按**视口**写（1280 / 1024），
-   但日历在 wiki 正文里的可用宽度本来就窄（1600 视口时约 1056px）——
-   于是视口 1025–1600 这一段，月历表格撑不过 `calc(100% - 600px)` 的月历区，
-   会溢出到右侧「当天活动」面板（calendar-events）底下造成重叠。
-   这里按**容器实际宽度**再补一档紧凑布局（等同它 ≤1024 的那套尺寸）：
-   侧栏 175 + 月历 `calc(100% - 475px)` + 活动面板 300 = 正好 100%，不溢出。
-   ============================================================ */
-@media screen and (min-width: 1025px) and (max-width: 1600px) {
-    .calendar-sidebar {
-        width: 175px;
-    }
-
-    .calendar-inner {
-        padding: 50px 10px 70px 10px;
-        max-width: calc(100% - 475px);
-        margin-left: 175px;
-    }
-
-    .sidebar-hide .calendar-inner {
-        max-width: calc(100% - 300px);
-    }
-
-    .event-hide .calendar-inner {
-        max-width: calc(100% - 175px);
-    }
-
-    .event-hide.sidebar-hide .calendar-inner {
-        max-width: 100%;
-    }
-
-    .calendar-events {
-        width: 300px;
-        padding: 70px 10px 60px 10px;
-    }
-
-    tr.calendar-body .calendar-day .day {
-        padding: 10px;
-        height: 45px;
-        width: 45px;
-        font-size: 16px;
-    }
-
-    .event-indicator > .type-bullet > div {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-    }
-
-    .calendar-sidebar > span#sidebarToggler,
-    #eventListToggler {
-        width: 50px;
-        height: 50px;
-    }
-}
-
-/* 兜底：再窄也不让月历内容外溢（宁可自己横向滚动，也不压到右侧面板下面） */
-.calendar-inner {
-    min-width: 0;
-    overflow-x: auto;
-}
-
-/* ============================================================
-   窄容器紧凑布局（首页 mini-block、卡片等）：
-   evoCalendar 的响应式断点按**视口**写（1280 / 1024 / 768 / 425），
-   但首页卡片只有 400px 左右，视口却是 1440px —— 固定 175/300px 的侧栏与事件面板
-   会把月历挤成一条。activity-calendar.js 用 ResizeObserver 按**容器自身宽度**
-   加 calendar-compact，下面把侧栏、月历、事件面板改成上下堆叠。
-   ============================================================ */
-.touhou-calendar.calendar-compact {
-    min-height: 0;
-}
-
-.touhou-calendar.calendar-compact .calendar-sidebar,
-.touhou-calendar.calendar-compact.sidebar-hide .calendar-sidebar {
-    position: relative !important;
-    width: 100% !important;
-    height: auto !important;
-    float: none !important;
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-.touhou-calendar.calendar-compact .calendar-sidebar > .calendar-year {
-    padding: 6px 12px;
-}
-
-.touhou-calendar.calendar-compact .calendar-sidebar > .calendar-year > p {
-    font-size: 18px;
-    margin: 0 8px;
-}
-
-.touhou-calendar.calendar-compact .calendar-sidebar > .month-list,
-.touhou-calendar.calendar-compact.sidebar-hide .calendar-sidebar > .month-list {
-    position: relative !important;
-    width: 100% !important;
-    height: auto !important;
-    max-height: 116px;
-    overflow-y: auto;
-    background-color: transparent !important;
-    transform: none !important;
-    z-index: auto;
-}
-
-.touhou-calendar.calendar-compact .calendar-sidebar > .month-list > .calendar-months {
-    position: static !important;
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 2px;
-    padding: 4px !important;
-}
-
-.touhou-calendar.calendar-compact .calendar-sidebar > .month-list > .calendar-months > li {
-    padding: 5px 2px !important;
-    font-size: 12px;
-    text-align: center;
-}
-
-.touhou-calendar.calendar-compact .calendar-sidebar > span#sidebarToggler,
-.touhou-calendar.calendar-compact #eventListToggler {
-    display: none !important;
-}
-
-.touhou-calendar.calendar-compact .calendar-inner {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin-left: 0 !important;
-    padding: 4px 4px 10px !important;
-    float: none !important;
-    box-shadow: none !important;
-    overflow-x: hidden;
-}
-
-.touhou-calendar.calendar-compact .calendar-inner::after {
-    content: none !important;
-    opacity: 0 !important;
-}
-
-.touhou-calendar.calendar-compact .calendar-events,
-.touhou-calendar.calendar-compact.event-hide .calendar-events {
-    position: relative !important;
-    top: auto !important;
-    right: auto !important;
-    width: 100% !important;
-    height: auto !important;
-    max-height: 280px;
-    padding: 10px 12px !important;
-    transform: none !important;
-    box-shadow: none !important;
-    overflow-y: auto;
-    z-index: auto !important;
-}
-
-.touhou-calendar.calendar-compact .calendar-events > .event-header > p {
-    margin: 0 0 6px;
-    font-size: 18px;
-}
-
-.touhou-calendar.calendar-compact .calendar-table {
-    display: table !important;
-    width: 100% !important;
-    table-layout: fixed;
-    font-size: 14px;
-}
-
-.touhou-calendar.calendar-compact tr.calendar-header .calendar-header-day {
-    padding: 4px 0 !important;
-    font-size: 12px;
-}
-
-.touhou-calendar.calendar-compact tr.calendar-body .calendar-day {
-    padding: 2px 0 !important;
-}
-
-.touhou-calendar.calendar-compact tr.calendar-body .calendar-day .day {
-    width: auto !important;
-    height: auto !important;
-    min-width: 24px;
-    min-height: 28px;
-    margin: 0 auto;
-    padding: 5px 0 !important;
-    font-size: 13px;
-}
-
-.touhou-calendar.calendar-compact .event-indicator {
-    transform: translate(-50%, calc(-100% + 2px)) !important;
-}
-
-.touhou-calendar.calendar-compact .event-indicator > .type-bullet > div {
-    width: 4px;
-    height: 4px;
-}
-
-/* 首页 mini-block 卡片：右上角的 Date / Latest 是装饰水印，
-   给日历顶部留出空间，避免粉色月份面板把 Date 遮住。 */
+/* 首页 mini-block 等卡片里的日历：不要在顶部留出旧的 Date 水印空隙 */
 .mini-block .touhou-calendar {
-    margin-top: 48px;
-}
-
-/* 紧凑日历与卡片同圆角，弱化 evoCalendar 自带的粉色外阴影 */
-.touhou-calendar.calendar-compact {
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-@media (max-width: 768px) {
-    .mini-block .touhou-calendar {
-        margin-top: 42px;
-    }
+    margin-top: 0;
 }

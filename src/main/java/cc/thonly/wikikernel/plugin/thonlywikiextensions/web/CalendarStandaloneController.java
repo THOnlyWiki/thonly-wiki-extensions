@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * 独立页面 {@code /calendar}（对应线上 {@code thonly.cc/calendar/} 的**无 wiki 布局**整页日历）：
- * 本地 evoCalendar + 本站活动表数据，不再依赖 Google 表格与 iframe。
+ * 本地原生活动日历 + 本站活动表数据，不再依赖 Google 表格、iframe 或第三方日历库。
  * <p>
  * 读权限由 {@code /api/thonly-activity/*} 接口自己把关（页面读权限不足时日历显示加载失败提示）；
  * 页面样式与「活动日历」wiki 页面 / {@code <touhou-calendar />} 标签共用
