@@ -5,6 +5,7 @@ import cc.thonly.wikikernel.common.extension.PageDisplayContext;
 import cc.thonly.wikikernel.common.extension.PageDisplayHook;
 import cc.thonly.wikikernel.common.service.AccessCheck;
 import cc.thonly.wikikernel.plugin.thonlywikiextensions.ThonlyActivitySchedulePlugin;
+import cc.thonly.wikikernel.plugin.thonlywikiextensions.ai.ThonlyAiConfig;
 import cc.thonly.wikikernel.plugin.thonlywikiextensions.service.ActivityStore;
 import cc.thonly.wikikernel.plugin.thonlywikiextensions.service.CalendarLinks;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,9 @@ public class ActivityPageHook implements PageDisplayHook {
     @Autowired
     private AccessCheck accessCheck;
 
+    @Autowired
+    private ThonlyAiConfig aiConfig;
+
     @Override
     public int order() {
         return 60;
@@ -62,6 +66,7 @@ public class ActivityPageHook implements PageDisplayHook {
         }
         List<Map<String, Object>> rows = store.list(year);
         boolean canEdit = accessCheck.can(AccessAction.EDIT, PAGE_TITLE, context.viewer());
+        boolean canAdmin = accessCheck.can(AccessAction.PROTECT, PAGE_TITLE, context.viewer());
 
         StringBuilder html = new StringBuilder(16384);
         html.append("<div class=\"thonly-activity-app thonly-app\">");
@@ -144,10 +149,90 @@ public class ActivityPageHook implements PageDisplayHook {
             html.append(editDialog());
             html.append(historyDialog());
         }
+        if (canAdmin) {
+            html.append(aiBar(aiConfig.settings()));
+            html.append(aiConfigDialog());
+            html.append(aiImportDialog());
+        }
 
         html.append("<p class=\"thonly-message\" id=\"thonly-message\" hidden></p>");
         html.append("</div>");
         return html.toString();
+    }
+
+    /** 管理员工具条：AI 整理与 AI 接口设置。 */
+    private static String aiBar(ThonlyAiConfig.Settings settings) {
+        StringBuilder html = new StringBuilder();
+        html.append("<div class=\"thonly-editor-bar thonly-ai-bar\">");
+        if (settings != null && settings.enabled()) {
+            html.append("<button type=\"button\" id=\"thonly-ai-import\">")
+                    .append(esc(settings.buttonLabel()))
+                    .append("</button>");
+        }
+        html.append("<button type=\"button\" id=\"thonly-ai-config\">AI 设置</button>");
+        html.append("</div>");
+        return html.toString();
+    }
+
+    /** AI 接口配置弹窗。Key 不回显；留空表示保留原值。 */
+    private static String aiConfigDialog() {
+        return "<div class=\"wiki-dialog-overlay\" id=\"thonly-ai-config-dialog\" hidden>"
+                + "<div class=\"wiki-dialog\" role=\"dialog\" aria-modal=\"true\">"
+                + "<div class=\"wiki-dialog-title\"><span>AI 接口设置</span>"
+                + "<button type=\"button\" class=\"wiki-dialog-close\" aria-label=\"关闭\">×</button></div>"
+                + "<div class=\"wiki-dialog-body\">"
+                + "<p class=\"wiki-hint\">只有管理员能使用。接口地址、模型和密钥都保存在服务端；"
+                + "前端不会拿到密钥，也没有任意 URL 代理接口。</p>"
+                + "<label class=\"thonly-ai-check\"><input type=\"checkbox\" id=\"thonly-ai-config-enabled\"/>"
+                + " 启用 AI 整理按钮</label>"
+                + "<div class=\"form-field\"><label for=\"thonly-ai-config-label\">按钮文字</label>"
+                + "<input type=\"text\" id=\"thonly-ai-config-label\" maxlength=\"60\" placeholder=\"AI 整理导入\"/></div>"
+                + "<div class=\"form-field\"><label for=\"thonly-ai-config-base-url\">OpenAI 兼容接口地址</label>"
+                + "<input type=\"url\" id=\"thonly-ai-config-base-url\" maxlength=\"2048\" "
+                + "placeholder=\"https://api.openai.com/v1\"/>"
+                + "<div class=\"wiki-hint\">会自动拼接 <code>/chat/completions</code>；也可以直接填完整地址。"
+                + "默认只允许公网 HTTPS。</div></div>"
+                + "<div class=\"form-field\"><label for=\"thonly-ai-config-model\">模型</label>"
+                + "<input type=\"text\" id=\"thonly-ai-config-model\" maxlength=\"200\" placeholder=\"gpt-4o-mini\"/></div>"
+                + "<div class=\"form-field\"><label for=\"thonly-ai-config-key\">API Key</label>"
+                + "<input type=\"password\" id=\"thonly-ai-config-key\" maxlength=\"1000\" autocomplete=\"new-password\" "
+                + "placeholder=\"留空表示不修改\"/>"
+                + "<div class=\"wiki-hint\" id=\"thonly-ai-key-hint\">未配置密钥。</div></div>"
+                + "<label class=\"thonly-ai-check\"><input type=\"checkbox\" id=\"thonly-ai-config-clear-key\"/>"
+                + " 清除已保存的 API Key</label>"
+                + "<label class=\"thonly-ai-check\"><input type=\"checkbox\" id=\"thonly-ai-config-allow-private\"/>"
+                + " 允许 http / 本机 / 内网端点（仅用于本地 Ollama、vLLM 等；会增加 SSRF 风险）</label>"
+                + "<p class=\"form-message\" id=\"thonly-ai-config-message\" hidden></p>"
+                + "</div>"
+                + "<div class=\"wiki-dialog-actions thonly-dialog-actions\">"
+                + "<button type=\"button\" id=\"thonly-ai-config-save\" class=\"wiki-button wiki-button-primary\">保存</button>"
+                + "<button type=\"button\" class=\"wiki-button thonly-ai-cancel\">取消</button>"
+                + "</div></div></div>";
+    }
+
+    /** AI 整理弹窗：粘贴文案 → 预览候选操作 → 管理员确认应用。 */
+    private static String aiImportDialog() {
+        return "<div class=\"wiki-dialog-overlay\" id=\"thonly-ai-dialog\" hidden>"
+                + "<div class=\"wiki-dialog thonly-ai-dialog\" role=\"dialog\" aria-modal=\"true\">"
+                + "<div class=\"wiki-dialog-title\"><span>AI 整理宣传文案</span>"
+                + "<button type=\"button\" class=\"wiki-dialog-close\" aria-label=\"关闭\">×</button></div>"
+                + "<div class=\"wiki-dialog-body\">"
+                + "<p class=\"wiki-hint\">把活动宣传文案整段粘进来。AI 只生成候选变更；"
+                + "下面预览并勾选后才会写入当前年份的速查表，不会删除已有活动。</p>"
+                + "<textarea id=\"thonly-ai-text\" class=\"thonly-ai-text\" rows=\"12\" maxlength=\"120000\" "
+                + "placeholder=\"例如：活动名称、时间、地点、QQ群、状态等宣传文案……\"></textarea>"
+                + "<div class=\"thonly-ai-count\" id=\"thonly-ai-count\">0 / 120000</div>"
+                + "<div class=\"form-actions thonly-ai-actions\">"
+                + "<button type=\"button\" id=\"thonly-ai-organize\" class=\"wiki-button wiki-button-primary\">"
+                + "让 AI 整理</button>"
+                + "<button type=\"button\" id=\"thonly-ai-apply\" class=\"wiki-button\" hidden>应用选中的修改</button>"
+                + "</div>"
+                + "<p class=\"form-message\" id=\"thonly-ai-status\" hidden></p>"
+                + "<div id=\"thonly-ai-result\" class=\"thonly-ai-result\" hidden></div>"
+                + "</div>"
+                + "<div class=\"wiki-dialog-actions thonly-dialog-actions\">"
+                + "<button type=\"button\" class=\"wiki-button thonly-ai-cancel\">关闭</button>"
+                + "</div></div></div>";
     }
 
     /** 编辑 / 添加弹窗（复用 core 的 {@code .wiki-dialog} 样式；字段由 activity.js 填 / 读）。 */

@@ -40,7 +40,9 @@ public class ActivityHeadProvider implements HtmlHeadProvider {
         if (ThonlyActivitySchedulePlugin.PAGE_TITLE.equals(title)) {
             return List.of(
                     "<link rel=\"stylesheet\" href=\"/plugins/thonly-wiki-extensions/activity.css\">",
-                    "<script defer src=\"/plugins/thonly-wiki-extensions/activity.js\"></script>");
+                    "<link rel=\"stylesheet\" href=\"/plugins/thonly-wiki-extensions/activity-ai.css\">",
+                    "<script defer src=\"/plugins/thonly-wiki-extensions/activity.js\"></script>",
+                    "<script defer src=\"/plugins/thonly-wiki-extensions/activity-ai.js\"></script>");
         }
         if (ThonlyActivitySchedulePlugin.MAP_PAGE_TITLE.equals(title)) {
             // ECharts（~2.5MB）只在「活动分布地图」这一个页面加载

@@ -14,6 +14,12 @@
 - **独立页** `/excel`（只读表格）与 `/excel/calendar/<年>/<id>.ics`（单条活动的 .ics 下载，手机/电脑日历通用）；
 - **API**：读 `/api/thonly-activity/years|list|revisions`；写 `/api/thonly-activity/save|delete|restore`
   （登录 + 同源 + 未封禁 + `edit` 权限；每次修改写一条 `edit` 日志，最近更改可见）。
+- **管理员 AI 整理**（`/wiki/线下活动速查表` 的「AI 设置」/「AI 整理导入」按钮）：
+  管理员可以把整段活动宣传文案交给 OpenAI 兼容的 Chat Completions 接口，AI 生成
+  新增 / 修改活动表的候选操作；页面预览并勾选后才写入，**不支持删除**。
+  接口地址、模型、API Key 由管理员在页面弹窗里保存；普通用户既看不到按钮，也不能
+  传 URL / Key 让服务器代请求。接口默认仅允许公网 HTTPS，且关闭重定向；
+  如需本机 Ollama / vLLM，可在配置里显式打开「允许 http / 本机 / 内网端点」。
 
 ## 安装
 
