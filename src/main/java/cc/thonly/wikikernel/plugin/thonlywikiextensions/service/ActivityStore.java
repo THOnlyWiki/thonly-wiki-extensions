@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -64,9 +65,10 @@ public class ActivityStore {
     public void bootstrap() {
         try {
             db.update("CREATE TABLE IF NOT EXISTS " + REVISION_TABLE + " ("
-                    + "id INTEGER PRIMARY KEY, year INTEGER NOT NULL, activity_id INTEGER, action TEXT NOT NULL,"
+                    + "id INTEGER PRIMARY KEY, " + yearColumn() + " INTEGER NOT NULL,"
+                    + "activity_id INTEGER, action TEXT NOT NULL,"
                     + "category TEXT, status TEXT, name TEXT, region TEXT, date TEXT, qq TEXT,"
-                    + "revision_user TEXT, comment TEXT, created_at TEXT NOT NULL)");
+                    + "revision_user TEXT, comment TEXT, created_at TEXT NOT NULL)" + tableOptions());
             for (int year : new TreeSet<>(seedYears())) {
                 ensureYear(year);
             }
@@ -83,7 +85,8 @@ public class ActivityStore {
         db.update("CREATE TABLE IF NOT EXISTS " + table + " ("
                 + "id INTEGER PRIMARY KEY, category TEXT NOT NULL, status TEXT, name TEXT NOT NULL,"
                 + "region TEXT, date TEXT, qq TEXT, sort_order INTEGER NOT NULL DEFAULT 0,"
-                + "deleted INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)");
+                + "deleted INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)"
+                + tableOptions());
     }
 
     /** 已经确保存在的「最远年份」：跨年后的第一个请求会再补一次（volatile，不依赖重启）。 */
@@ -112,10 +115,9 @@ public class ActivityStore {
     public List<Integer> years() {
         ensureUpcomingYears();
         TreeSet<Integer> years = new TreeSet<>();
-        for (DbRow row : db.query("SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE ?",
-                TABLE_PREFIX + "%")) {
-            String name = row.string("name");
-            if (name == null || name.length() != TABLE_PREFIX.length() + 4) {
+        for (String name : db.tableNames()) {
+            if (name == null || !name.startsWith(TABLE_PREFIX)
+                    || name.length() != TABLE_PREFIX.length() + 4) {
                 continue;
             }
             try {
@@ -221,7 +223,8 @@ public class ActivityStore {
     public List<Map<String, Object>> revisions(int year, int limit) {
         List<Map<String, Object>> rows = new ArrayList<>();
         for (DbRow row : db.query("SELECT * FROM " + REVISION_TABLE
-                + " WHERE year = ? ORDER BY id DESC LIMIT ?", year, Math.max(1, Math.min(limit, 200)))) {
+                + " WHERE " + yearColumn() + " = ? ORDER BY id DESC LIMIT ?",
+                year, Math.max(1, Math.min(limit, 200)))) {
             rows.add(toMap(row));
         }
         return rows;
@@ -269,7 +272,8 @@ public class ActivityStore {
                           String status, String name, String region, String date, String qq, String comment) {
         long id = db.queryOne("SELECT COALESCE(MAX(id), 0) AS m FROM " + REVISION_TABLE)
                 .map((row) -> row.longValue("m", 0L)).orElse(0L) + 1;
-        db.update("INSERT INTO " + REVISION_TABLE + " (id, year, activity_id, action, category, status,"
+        db.update("INSERT INTO " + REVISION_TABLE + " (id, " + yearColumn()
+                        + ", activity_id, action, category, status,"
                         + " name, region, date, qq, revision_user, comment, created_at)"
                         + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 id, year, activityId, action, category, status, name, region, date, qq,
@@ -303,6 +307,30 @@ public class ActivityStore {
             throw new IllegalArgumentException("activity.yearInvalid");
         }
         return TABLE_PREFIX + year;
+    }
+
+    /**
+     * {@code year} 在 H2 中是保留字，MySQL / MariaDB 又偏好反引号，所以按数据库产品名选择引用符。
+     * 只用于历史表的列名，不影响按年份物理分表。
+     */
+    private String yearColumn() {
+        String product = db.databaseProductName().toLowerCase(Locale.ROOT);
+        if (product.contains("mysql") || product.contains("mariadb")) {
+            return "`year`";
+        }
+        return "\"year\"";
+    }
+
+    /**
+     * MySQL / MariaDB 的库默认字符集可能是 latin1；活动表含中文 / emoji，必须显式 utf8mb4。
+     * SQLite / H2 不需要表选项。
+     */
+    private String tableOptions() {
+        String product = db.databaseProductName().toLowerCase(Locale.ROOT);
+        if (product.contains("mysql") || product.contains("mariadb")) {
+            return " DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+        }
+        return "";
     }
 
     private static String normalizeCategory(String category) {
