@@ -707,8 +707,7 @@
                 + '<select id="thc-edit-status" name="status">'
                     + statusOptions(activity.status) + '</select>'
                 + '<label for="thc-edit-region">地区</label>'
-                + '<input id="thc-edit-region" name="region" type="text" maxlength="255" value="'
-                    + escapeHtml(activity.region) + '"/>'
+                + '<select id="thc-edit-region" name="region"></select>'
                 + '<label for="thc-edit-date">日期</label>'
                 + '<input id="thc-edit-date" name="date" type="date" required value="'
                     + escapeHtml(activity.date) + '"/>'
@@ -727,6 +726,7 @@
         document.body.classList.add('thc-modal-open');
 
         var form = modalOverlay.querySelector('form');
+        window.ThonlyActivityRegions.populate(form.elements.region, activity.region);
         var saveButton = form.querySelector('.thc-modal-primary');
         modalOverlay.addEventListener('click', function (event) {
             if (event.target === modalOverlay || event.target.closest('[data-thc-modal-cancel]')) {

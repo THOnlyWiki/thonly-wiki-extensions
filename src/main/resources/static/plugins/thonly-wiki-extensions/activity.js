@@ -1,15 +1,23 @@
-/*
- * 活动速查表交互（独立页 /excel 与 wiki 页面共用）：
- *  - 搜索框 / 类型下拉：客户端筛选（等价原站 searchTable 的行为，可按省份筛）；
- *  - 年份下拉：整页跳转（?year=）；
- *  - 编辑（只在 /wiki/线下活动速查表，且只有有权限的人才会渲染出这些控件）：
- *      「操作」列的「编辑」文字链接 → 弹窗表单；「添加活动」→ 同一个弹窗；
- *      「变更历史」→ 弹窗列表，可回滚；全部调 /api/thonly-activity/*，服务端校验登录 + edit 权限。
+/* 活动正文交互：组合查询、详情、编辑抽屉与变更历史。
+ * 年份切换沿用服务端数据，独立只读 /excel 继续共用搜索与类型筛选。
+ * 写操作仍调用原 API，由服务端校验登录、编辑权限和同源请求。
  */
 (function () {
     'use strict';
 
     var BASE = '/api/thonly-activity';
+    var app = document.querySelector('.thonly-activity-app');
+    var quickFilter = 'all';
+    var filterRows;
+    var detailRow = null;
+    var writing = false;
+    // 正文的容器查询与皮肤动画会建立定位上下文，遮罩统一挂到 body。
+    if (app) {
+        Array.prototype.forEach.call(app.querySelectorAll('.wiki-dialog-overlay'), function (overlay) {
+            overlay.classList.add('thonly-activity-overlay');
+            document.body.appendChild(overlay);
+        });
+    }
 
     function byId(id) {
         return document.getElementById(id);
@@ -25,18 +33,32 @@
     }
 
     function message(text, ok) {
-        var box = byId('thonly-message');
+        var edit = byId('thonly-dialog');
+        var box = edit && !edit.hidden ? byId('thonly-edit-message') : byId('thonly-message');
         if (!box) {
             return;
         }
         box.textContent = text || '';
-        box.className = 'thonly-message' + (ok ? '' : ' is-error');
+        box.classList.toggle('is-error', !ok);
         box.hidden = !text;
     }
 
     function show(element, visible) {
-        if (element) {
-            element.hidden = !visible;
+        if (!element || element.hidden === !visible) {
+            return;
+        }
+        if (visible) {
+            element.__thonlyReturnFocus = document.activeElement;
+        }
+        element.hidden = !visible;
+        if (element.classList.contains('thonly-modal')) {
+            document.body.classList.toggle('thonly-dialog-open', !!document.querySelector('.thonly-modal:not([hidden])'));
+            if (visible) {
+                var first = element.querySelector('button, input, select, a[href]');
+                if (first) { first.focus(); }
+            } else if (element.__thonlyReturnFocus && element.__thonlyReturnFocus.isConnected) {
+                element.__thonlyReturnFocus.focus();
+            }
         }
     }
 
@@ -52,59 +74,135 @@
         return element ? element.value.trim() : '';
     }
 
-    // ---------- 搜索 + 类型筛选（等价原站 searchTable / 类型下拉） ----------
-    function applyFilters() {
-        var element = table();
-        if (!element) {
-            return;
+    // ---------- 查询：全部在已渲染的当前年份数据中筛选，不额外轮询接口 ----------
+    var filterKeys = {
+        'thonly-region': 'activity-region', 'thonly-type': 'activity-type',
+        'thonly-status': 'activity-status', 'thonly-month': 'activity-month'
+    };
+
+    function queryValue(id, fallback) {
+        var element = byId(id);
+        return element ? element.value : fallback;
+    }
+
+    function indexedRows() {
+        if (!filterRows) {
+            var element = table();
+            filterRows = element ? Array.prototype.map.call(element.querySelectorAll('tbody tr'), function (row) {
+                function value(key, index) {
+                    var raw = row.getAttribute('data-' + key);
+                    return raw == null ? (row.cells[index] ? row.cells[index].textContent.trim() : '') : raw;
+                }
+                var name = value('name', 1), region = value('region', 2), qq = value('qq', 4);
+                return { row: row, region: region, status: value('status', 0),
+                    category: (row.getAttribute('data-category') || '').toUpperCase(),
+                    date: toInputDate(value('date', 3)),
+                    search: [name, region, qq, value('status', 0)].join(' ').toLowerCase() };
+            }) : [];
         }
+        return filterRows;
+    }
+
+    function updateFilterUrl() {
+        if (!app) { return; }
+        var url = new URL(window.location.href);
+        Object.keys(filterKeys).forEach(function (id) {
+            var value = queryValue(id, '');
+            if (value && value !== 'ALL') { url.searchParams.set(filterKeys[id], value); }
+            else { url.searchParams.delete(filterKeys[id]); }
+        });
+        var search = app.querySelector('.thonly-search').value.trim();
+        if (search) { url.searchParams.set('activity-search', search); }
+        else { url.searchParams.delete('activity-search'); }
+        if (quickFilter !== 'all') { url.searchParams.set('activity-when', quickFilter); }
+        else { url.searchParams.delete('activity-when'); }
+        window.history.replaceState(window.history.state, '', url);
+    }
+
+    function updateMoreFilters() {
+        var button = byId('thonly-more-filters');
+        if (!button) { return; }
+        var count = (queryValue('thonly-type', 'ALL') !== 'ALL' ? 1 : 0)
+                + (queryValue('thonly-status', '') ? 1 : 0) + (queryValue('thonly-month', '') ? 1 : 0);
+        button.textContent = button.getAttribute('aria-expanded') === 'true' ? '收起更多筛选'
+                : '更多筛选 · 类型 / 状态 / 月份' + (count ? '（已选 ' + count + ' 项）' : '');
+    }
+
+    function applyFilters(updateUrl) {
         var input = document.querySelector('input.thonly-search');
         var query = input ? input.value.trim().toLowerCase() : '';
-        var typeSelect = byId('thonly-type');
-        var type = typeSelect ? typeSelect.value : 'ALL';
-        Array.prototype.forEach.call(element.querySelectorAll('tbody tr'), function (row) {
-            var text = row.textContent.toLowerCase();
-            var rowType = (row.getAttribute('data-category') || '').toUpperCase();
-            var matchType = (type === 'ALL')
-                || (type === 'TOUHOU_ONLY' && rowType === 'THO')
-                || (type === 'TOUHOU_PARTY' && rowType === 'THP')
-                || (type === 'SCHOOL_PARTY' && rowType === 'SCHOOL')
-                || (type === 'LIVE_OR_MUSIC' && rowType === 'LIVE');
-            row.hidden = !(matchType && (query === '' || text.indexOf(query) >= 0));
+        var type = queryValue('thonly-type', 'ALL');
+        var region = queryValue('thonly-region', '');
+        var status = queryValue('thonly-status', '');
+        var month = queryValue('thonly-month', '');
+        var types = {TOUHOU_ONLY:'THO', TOUHOU_PARTY:'THP', SCHOOL_PARTY:'SCHOOL', LIVE_OR_MUSIC:'LIVE'};
+        var now = new Date();
+        var today = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2) + '-' + ('0' + now.getDate()).slice(-2);
+        var count = 0;
+        indexedRows().forEach(function (item) {
+            var match = (!type || type === 'ALL' || item.category === types[type])
+                && (!query || item.search.indexOf(query) >= 0)
+                && (!region || (window.ThonlyActivityRegions
+                    ? window.ThonlyActivityRegions.canonicalize(item.region) === window.ThonlyActivityRegions.canonicalize(region)
+                    : item.region === region)) && (!status || item.status === status)
+                && (!month || (item.date && +item.date.slice(5, 7) === +month))
+                && (quickFilter !== 'pending' || !item.date)
+                && (quickFilter !== 'upcoming' || (item.date >= today && item.status.indexOf('取消') < 0));
+            item.row.hidden = !match;
+            if (match) { count++; }
         });
+        var counter = byId('thonly-result-count');
+        if (counter) { counter.textContent = count + ' 项'; }
+        var empty = byId('thonly-empty');
+        if (empty) { empty.hidden = count > 0; }
+        if (app) {
+            Array.prototype.forEach.call(app.querySelectorAll('[data-thonly-quick]'), function (button) {
+                button.setAttribute('aria-pressed', String(button.getAttribute('data-thonly-quick') === quickFilter));
+            });
+        }
+        updateMoreFilters();
+        if (updateUrl) { updateFilterUrl(); }
+    }
+
+    function restoreFilters() {
+        if (!app) { return; }
+        var params = new URL(window.location.href).searchParams;
+        Object.keys(filterKeys).forEach(function (id) {
+            var select = byId(id), value = params.get(filterKeys[id]);
+            if (select && value != null && Array.prototype.some.call(select.options, function (o) { return o.value === value; })) {
+                select.value = value;
+            }
+        });
+        app.querySelector('.thonly-search').value = params.get('activity-search') || '';
+        var when = params.get('activity-when');
+        quickFilter = when === 'upcoming' || when === 'pending' ? when : 'all';
+    }
+
+    function resetFilters() {
+        set('thonly-region', ''); set('thonly-type', 'ALL'); set('thonly-status', ''); set('thonly-month', '');
+        var input = document.querySelector('.thonly-search');
+        if (input) { input.value = ''; }
+        quickFilter = 'all';
+        applyFilters(true);
     }
 
     document.addEventListener('input', function (event) {
-        if (event.target && event.target.classList && event.target.classList.contains('thonly-search')) {
-            applyFilters();
-        }
+        if (event.target && event.target.classList.contains('thonly-search')) { applyFilters(true); }
     });
-
     document.addEventListener('change', function (event) {
-        if (!event.target) {
-            return;
-        }
+        if (!event.target) { return; }
         if (event.target.id === 'thonly-year') {
-            var year = event.target.value;
             var url = new URL(window.location.href);
-            if (year === 'ALL') {
-                url.searchParams.delete('year');
-            } else {
-                url.searchParams.set('year', year);
-            }
+            url.searchParams.set('year', event.target.value);
             window.location.href = url.toString();
-        } else if (event.target.id === 'thonly-type') {
-            applyFilters();
+        } else if (filterKeys[event.target.id]) {
+            applyFilters(true);
         } else if (event.target.id === 'thonly-f-date-none') {
             syncDateField(event.target.checked);
-            // 勾上「暂无」就把旧值提示收起来，取消勾选再显示
             setDateHint(event.target.checked ? '' : editingDateRaw);
         } else if (event.target.id === 'thonly-f-date' && event.target.value) {
-            // 选了日期就取消「暂无」
             var dateNone = byId('thonly-f-date-none');
-            if (dateNone) {
-                dateNone.checked = false;
-            }
+            if (dateNone) { dateNone.checked = false; }
         }
     });
 
@@ -129,13 +227,14 @@
     // ---------- 编辑 / 添加弹窗 ----------
     var dialog = byId('thonly-dialog');
     var historyDialog = byId('thonly-history-dialog');
+    var detailDialog = byId('thonly-detail-dialog');
     var editingRow = null;
     /** 打开弹窗时该行的原始日期文本（不是标准日期的原样保留，例如旧数据里的 2024/8/45）。 */
     var editingDateRaw = '';
 
     /** 表内写法 yyyy/M/d → date 控件的 yyyy-MM-dd（非法日期如 2024/8/45 返回空串）。 */
     function toInputDate(value) {
-        var m = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/.exec((value || '').trim());
+        var m = /^(\d{4})[/.\-](\d{1,2})[/.\-](\d{1,2})$/.exec((value || '').trim());
         if (!m) {
             return '';
         }
@@ -188,6 +287,8 @@
             return;
         }
         editingRow = row;
+        var error = byId('thonly-edit-message');
+        if (error) { error.hidden = true; }
         var title = byId('thonly-dialog-title');
         if (title) {
             title.textContent = '编辑活动';
@@ -195,7 +296,7 @@
         set('thonly-f-status', row.getAttribute('data-status'));
         set('thonly-f-category', (row.getAttribute('data-category') || 'tho').toLowerCase());
         set('thonly-f-name', row.getAttribute('data-name'));
-        set('thonly-f-region', row.getAttribute('data-region'));
+        window.ThonlyActivityRegions.populate(byId('thonly-f-region'), row.getAttribute('data-region'));
         editingDateRaw = (row.getAttribute('data-date') || '').trim();
         var none = editingDateRaw === '暂无';
         set('thonly-f-date', toInputDate(editingDateRaw));
@@ -219,6 +320,8 @@
             return;
         }
         editingRow = null;
+        var error = byId('thonly-edit-message');
+        if (error) { error.hidden = true; }
         var title = byId('thonly-dialog-title');
         if (title) {
             title.textContent = '添加活动';
@@ -226,7 +329,7 @@
         set('thonly-f-status', '计划');
         set('thonly-f-category', 'tho');
         set('thonly-f-name', '');
-        set('thonly-f-region', '');
+        window.ThonlyActivityRegions.populate(byId('thonly-f-region'), '');
         editingDateRaw = '';
         set('thonly-f-date', '');
         var dateNone = byId('thonly-f-date-none');
@@ -245,11 +348,15 @@
     }
 
     function save() {
+        if (writing) { return; }
         var name = fieldValue('thonly-f-name');
         if (!name) {
             message('「名字」不能为空。', false);
             return;
         }
+        writing = true;
+        byId('thonly-save').disabled = true;
+        byId('thonly-save').textContent = '保存中…';
         post(BASE + '/save', new URLSearchParams({
             year: currentYear(),
             id: editingRow ? (editingRow.getAttribute('data-id') || '') : '',
@@ -268,11 +375,15 @@
             message((result && result.message) || '保存失败。', false);
         }).catch(function () {
             message('网络错误。', false);
+        }).finally(function () {
+            writing = false;
+            byId('thonly-save').disabled = false;
+            byId('thonly-save').textContent = '保存活动';
         });
     }
 
     function removeRow() {
-        if (!editingRow) {
+        if (!editingRow || writing) {
             return;
         }
         if (!window.confirm('确定删除「' + (editingRow.getAttribute('data-name') || '') + '」吗？')) {
@@ -333,72 +444,86 @@
         });
     }
 
-    // ---------- 点击 / 键盘 ----------
+    function openDetail(row) {
+        if (!detailDialog || !row) { return; }
+        detailRow = row;
+        var labels = {date:'日期待定', region:'未填写', status:'未填写', qq:'暂未公布'};
+        byId('thonly-detail-title').textContent = row.getAttribute('data-name') || '活动详情';
+        Object.keys(labels).forEach(function (key) {
+            byId('thonly-detail-' + key).textContent = row.getAttribute('data-' + key) || labels[key];
+        });
+        byId('thonly-detail-type').textContent = row.querySelector('.thonly-type-badge').textContent;
+        var source = row.querySelector('.thonly-ics');
+        var link = byId('thonly-detail-ics');
+        link.hidden = !source;
+        if (source) { link.href = source.getAttribute('href'); }
+        else { link.removeAttribute('href'); }
+        byId('thonly-copy-qq').hidden = !row.getAttribute('data-qq');
+        show(detailDialog, true);
+    }
+
+    var editForm = byId('thonly-edit-form');
+    if (editForm) {
+        editForm.addEventListener('submit', function (event) { event.preventDefault(); save(); });
+    }
+
     document.addEventListener('click', function (event) {
         var target = event.target;
-        if (!target || !target.closest) {
+        if (!target || !target.closest) { return; }
+        var overlay = target.closest('.thonly-modal');
+        if (overlay && (target.closest('.wiki-dialog-close, .thonly-dialog-cancel') || target === overlay)) {
+            show(overlay, false); return;
+        }
+        if (target.closest('[data-thonly-reset]')) { resetFilters(); return; }
+        var quick = target.closest('[data-thonly-quick]');
+        if (quick) { quickFilter = quick.getAttribute('data-thonly-quick'); applyFilters(true); return; }
+        if (target.id === 'thonly-more-filters') {
+            var expanded = target.getAttribute('aria-expanded') !== 'true';
+            target.setAttribute('aria-expanded', String(expanded));
+            target.closest('.thonly-filters').classList.toggle('is-expanded', expanded);
+            updateMoreFilters(); return;
+        }
+        var detail = target.closest('.thonly-detail');
+        if (detail) { openDetail(detail.closest('tr')); return; }
+        if (target.id === 'thonly-detail-edit') { show(detailDialog, false); openEdit(detailRow); return; }
+        if (target.id === 'thonly-copy-qq' && detailRow) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(detailRow.getAttribute('data-qq') || '')
+                    .then(function () { message('已复制联络信息。', true); })
+                    .catch(function () { message('复制失败，请选择联络信息后手动复制。', false); });
+            } else { message('请选择联络信息后手动复制。', false); }
             return;
         }
-
-        if (target.closest('.wiki-dialog-close') || target.closest('.thonly-dialog-cancel')) {
-            show(dialog, false);
-            show(historyDialog, false);
-            return;
-        }
-        if (dialog && !dialog.hidden && target === dialog) {
-            show(dialog, false);
-            return;
-        }
-        if (historyDialog && !historyDialog.hidden && target === historyDialog) {
-            show(historyDialog, false);
-            return;
-        }
-
         var editLink = target.closest('.thonly-edit');
-        if (editLink) {
-            event.preventDefault();
-            openEdit(editLink.closest('tr'));
-            return;
-        }
-        if (target.id === 'thonly-add') {
-            openAdd();
-            return;
-        }
-        if (target.id === 'thonly-save') {
-            save();
-            return;
-        }
-        if (target.id === 'thonly-delete') {
-            removeRow();
-            return;
-        }
-        if (target.id === 'thonly-history') {
-            loadHistory();
-            return;
-        }
-
+        if (editLink) { event.preventDefault(); openEdit(editLink.closest('tr')); return; }
+        if (target.id === 'thonly-add') { openAdd(); return; }
+        if (target.id === 'thonly-delete') { removeRow(); return; }
+        if (target.id === 'thonly-history') { loadHistory(); return; }
         var rollback = target.closest('.thonly-rollback');
         if (rollback) {
+            if (!window.confirm('确认回滚到这条历史记录？')) { return; }
             var revisionId = rollback.getAttribute('data-revision') || '';
-            post(BASE + '/restore', new URLSearchParams({
-                revisionId: revisionId,
-                comment: '历史回滚'
-            })).then(function (result) {
-                if (result && result.restored) {
-                    window.location.reload();
-                    return;
-                }
-                message((result && result.message) || '回滚失败。', false);
-            });
+            post(BASE + '/restore', new URLSearchParams({revisionId:revisionId, comment:'历史回滚'}))
+                .then(function (result) {
+                    if (result && result.restored) { window.location.reload(); return; }
+                    message((result && result.message) || '回滚失败。', false);
+                }).catch(function () { message('回滚失败，请稍后重试。', false); });
         }
     });
 
     document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
-            show(dialog, false);
-            show(historyDialog, false);
+        var open = document.querySelector('.thonly-modal:not([hidden])');
+        if (!open) { return; }
+        if (event.key === 'Escape') { event.preventDefault(); show(open, false); }
+        if (event.key === 'Tab') {
+            var controls = Array.prototype.filter.call(open.querySelectorAll('button,input,select,a[href]'), function (e) {
+                return !e.disabled && e.getClientRects().length;
+            });
+            var first = controls[0], last = controls[controls.length - 1];
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+            else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
         }
     });
-
-    applyFilters();
+    restoreFilters();
+    applyFilters(false);
 })();

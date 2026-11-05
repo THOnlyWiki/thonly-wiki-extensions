@@ -1,0 +1,42 @@
+/* 三个活动正文页面的共同导航；仅作用于本组件。 */
+.thonly-activity-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px 20px;
+    width: 100%;
+    min-width: 0;
+    margin: 0 0 16px;
+    font-size: .9em;
+    --thonly-nav-accent: var(--color-primary, var(--wiki-link, #36c));
+    --thonly-nav-muted: var(--color-base--subtle, #72777d);
+}
+.thonly-activity-navigation .thonly-views {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px;
+    min-width: 0;
+    font-size: 1em;
+}
+.thonly-activity-navigation .thonly-views > * {
+    display: block;
+    padding: 10px 0;
+    border-bottom: 3px solid transparent;
+    color: var(--thonly-nav-muted);
+    text-decoration: none;
+    white-space: nowrap;
+}
+.thonly-activity-navigation .thonly-views > a:hover {
+    color: var(--thonly-nav-accent);
+}
+.thonly-activity-navigation .thonly-views .is-current {
+    color: var(--thonly-nav-accent);
+    border-bottom-color: var(--thonly-nav-accent);
+    font-weight: 600;
+}
+.thonly-activity-navigation a:focus-visible {
+    outline: 2px solid var(--thonly-nav-accent);
+    outline-offset: 3px;
+}

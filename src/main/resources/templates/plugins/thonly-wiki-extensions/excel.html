@@ -6,13 +6,14 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title th:text="${pageTitle}">全国东方Project线下活动表格</title>
-    <link rel="stylesheet" th:href="@{/plugins/thonly-wiki-extensions/activity.css}"/>
+    <link rel="stylesheet" th:href="@{/plugins/thonly-wiki-extensions/activity-legacy.css}"/>
     <meta name="robots" content="noindex"/>
 </head>
 <body class="thonly-excel-page">
 <div class="thonly-app">
     <div class="thonly-logo">
-        <img width="125" th:src="@{/img/wiki-logo.svg}" alt="Touhou Activities Wiki Logo"/>
+        <img width="125" th:if="${!#strings.isEmpty(skin.logoUrl)}" th:src="${skin.logoUrl}"
+             th:alt="${siteName} ?: 'WikiKernel'"/>
     </div>
     <div class="thonly-title" th:text="${pageTitle}">全国东方Project线下活动表格</div>
     <p>
@@ -79,6 +80,6 @@
     </div>
 </div>
 <p class="thonly-message" id="thonly-message" hidden></p>
-<script th:src="@{/plugins/thonly-wiki-extensions/activity.js}" defer></script>
+<script th:src="@{/plugins/thonly-wiki-extensions/activity.js?v=2}" defer></script>
 </body>
 </html>

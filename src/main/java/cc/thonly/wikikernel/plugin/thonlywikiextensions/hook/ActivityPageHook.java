@@ -11,23 +11,16 @@ import cc.thonly.wikikernel.plugin.thonlywikiextensions.service.CalendarLinks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeSet;
 
 /**
- * 「线下活动速查表」页面：**接管正文渲染**（页面没建也不 404），并且是**唯一带编辑功能**的地方
- * （独立页 /excel 只读）。
- * <ul>
- *     <li>外观照原站 {@code D:\wwwroot\THONLY_CC_PROJECT\excel} 移植：表格 / 搜索框 / 两个下拉 /
- *         链接样式；wiki 页面里**不套白卡片、不放大标题**（皮肤正文区本身就是容器，标题由皮肤显示）、
- *         也不放「回到顶部」（皮肤自带）；</li>
- *     <li>有 {@code edit} 权限的人（默认登录用户，可在 特殊:权限配置 按用户组调整）在「操作」列看到
- *         **文字链接「编辑」**（点开是弹窗表单），底部还有「添加活动」（同一个弹窗）与「变更历史」
- *         （弹窗列表，可回滚）——增删改查全在这一页；</li>
- *     <li>每条活动「操作」列固定有「加入日历」（.ics 下载）；不再有 Google 链接。</li>
- * </ul>
- * 样式与脚本的注入见 {@link ActivityHeadProvider}（{@code headItems} 在「页面不存在」路径下不生效，踩过坑）。
+ * 接管「线下活动速查表」正文（含尚未创建的页面）。
+ * 保留皮肤标题与导航；查询、速查表及管理入口在正文内呈现。
+ * 独立页 /excel 保持只读，写操作仍由原 API 校验登录与权限。
  */
 @Component
 public class ActivityPageHook implements PageDisplayHook {
@@ -64,100 +57,192 @@ public class ActivityPageHook implements PageDisplayHook {
         if (!years.contains(year)) {
             year = store.defaultYear();
         }
-        List<Map<String, Object>> rows = store.list(year);
-        boolean canEdit = accessCheck.can(AccessAction.EDIT, PAGE_TITLE, context.viewer());
-        boolean canAdmin = accessCheck.can(AccessAction.PROTECT, PAGE_TITLE, context.viewer());
+        List<Map<String, Object>> rows = store.list(year).stream()
+                .sorted(Comparator.comparing(
+                        (Map<String, Object> row) -> CalendarLinks.parseDate(text(row.get("date"))),
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+        boolean canEdit = context.viewer().loggedIn() && accessCheck.can(AccessAction.EDIT, PAGE_TITLE, context.viewer());
+        boolean canAdmin = context.viewer().loggedIn() && accessCheck.can(AccessAction.PROTECT, PAGE_TITLE, context.viewer());
 
-        StringBuilder html = new StringBuilder(16384);
-        html.append("<div class=\"thonly-activity-app thonly-app\">");
-
-        html.append("<p class=\"thonly-tips\">Tips：登录后即可编辑（默认登录用户都有权限，可在 ")
-                .append("特殊:权限配置 按用户组调整）；发现表格里信息有误，欢迎来群里捉虫。")
-                .append("<a target=\"_blank\" rel=\"noopener\" style=\"color:#EC7063;\"")
+        StringBuilder html = new StringBuilder(24576);
+        html.append("<div class=\"thonly-activity-app thonly-app\"><div class=\"thonly-activity-content\">");
+        html.append("<div class=\"thonly-intro\"><p>查找各地活动，快速核对日期、地区与联络方式。</p>")
+                .append("<a class=\"thonly-community\" target=\"_blank\" rel=\"noopener\"")
                 .append(" href=\"https://qm.qq.com/cgi-bin/qm/qr?_wv=1027&amp;k=yI4hzduOvfoisCSfcG7RRD5O5daf_UDi\">")
-                .append("东方Project线下活动维基群：868256565</a></p>");
-
-        // 搜索 + 两个下拉（居中）
-        html.append("<div class=\"thonly-search-container\">")
-                .append("<input type=\"search\" class=\"thonly-search\" placeholder=\"搜索活动(可筛选省份)...\"/>")
+                .append("反馈与交流：868256565</a></div>");
+        html.append(ActivityToolbar.open(PAGE_TITLE));
+        if (canEdit || canAdmin) {
+            html.append("<div class=\"thonly-management\" aria-label=\"活动管理\">");
+            if (canEdit) {
+                html.append("<button type=\"button\" id=\"thonly-history\" class=\"wiki-button\">变更历史</button>")
+                        .append("<button type=\"button\" id=\"thonly-add\" class=\"wiki-button wiki-button-primary\">＋ 添加活动</button>");
+            }
+            if (canAdmin) {
+                html.append("<details class=\"thonly-admin-tools\"><summary>更多工具</summary>")
+                        .append(aiBar(aiConfig.settings())).append("</details>");
+            }
+            html.append("</div>");
+        }
+        html.append("</div>");
+        appendFilters(html, years, year, rows);
+        html.append("<div class=\"thonly-results-heading\"><strong>活动列表 <span id=\"thonly-result-count\" aria-live=\"polite\">")
+                .append(rows.size()).append(" 项</span></strong><span>按日期升序 · 日期待定排在最后</span></div>");
+        html.append("<div class=\"thonly-table-panel\"><table class=\"thonly-excel\" data-year=\"").append(year)
+                .append("\" role=\"table\"><caption class=\"thonly-visually-hidden\">").append(year)
+                .append(" 年线下活动速查表</caption><thead><tr>")
+                .append("<th scope=\"col\">日期</th><th scope=\"col\">状态</th><th scope=\"col\">活动名称</th>")
+                .append("<th scope=\"col\">地区</th><th scope=\"col\">类型</th><th scope=\"col\">QQ群 / 联络信息</th>")
+                .append("<th scope=\"col\">操作</th></tr></thead><tbody>");
+        for (Map<String, Object> row : rows) {
+            appendRow(html, year, row, canEdit);
+        }
+        html.append("</tbody></table><div class=\"thonly-empty\" id=\"thonly-empty\"")
+                .append(rows.isEmpty() ? "" : " hidden").append(">没有匹配的活动。")
+                .append("<button type=\"button\" class=\"wiki-button\" data-thonly-reset>重置筛选</button></div></div>");
+        html.append("<p class=\"thonly-footnote\">活动安排可能调整，请以主办方最终公告为准。点击活动名称可查看详情。</p>")
                 .append("</div>");
+        // 弹窗放在查询容器外，避免 container-type 改变 fixed 定位的参照。
+        html.append(detailDialog(canEdit));
+        if (canEdit) {
+            html.append(editDialog()).append(historyDialog());
+        }
+        if (canAdmin) {
+            html.append(aiConfigDialog()).append(aiImportDialog());
+        }
+        html.append("<p class=\"thonly-message\" id=\"thonly-message\" role=\"status\" hidden></p></div>");
+        return html.toString();
+    }
 
-        html.append("<label class=\"thonly-condition\">");
-        html.append("<select class=\"year\" id=\"thonly-year\" name=\"年份\">");
+    private static void appendFilters(StringBuilder html, List<Integer> years, int year,
+                                      List<Map<String, Object>> rows) {
+        html.append("<section class=\"thonly-filters\" aria-label=\"查询活动\"><div class=\"thonly-search-row\">")
+                .append("<label class=\"thonly-visually-hidden\" for=\"thonly-search\">搜索活动名称、地区或联络信息</label>")
+                .append("<input type=\"search\" id=\"thonly-search\" class=\"thonly-search\" placeholder=\"搜索活动名称、地区或 QQ 群…\"/>")
+                .append("<button type=\"button\" class=\"wiki-button wiki-button-quiet\" data-thonly-reset>重置筛选</button></div>")
+                .append("<div class=\"thonly-filter-fields\" id=\"thonly-filter-fields\">")
+                .append("<div class=\"thonly-filter-field\"><label for=\"thonly-year\">年份</label><select id=\"thonly-year\">");
         for (int value : years) {
             html.append("<option value=\"").append(value).append("\"")
                     .append(value == year ? " selected" : "").append(">").append(value).append("</option>");
         }
-        html.append("</select>");
-        html.append("<select class=\"type\" id=\"thonly-type\" name=\"类型\">")
-                .append("<option value=\"ALL\">全部</option>")
-                .append("<option value=\"TOUHOU_ONLY\">THO</option>")
-                .append("<option value=\"TOUHOU_PARTY\">THP&amp;茶会</option>")
-                .append("<option value=\"SCHOOL_PARTY\">高校例会</option>")
-                .append("<option value=\"LIVE_OR_MUSIC\">Live&amp;音乐会</option>")
-                .append("</select></label>");
+        html.append("</select></div><div class=\"thonly-filter-field\"><label for=\"thonly-region\">省份 / 地区</label>")
+                .append("<select id=\"thonly-region\"><option value=\"\">全部地区</option>");
+        appendOptions(html, rows, "region");
+        html.append("</select></div><div class=\"thonly-filter-field thonly-extra-filter\"><label for=\"thonly-type\">活动类型</label>")
+                .append("<select id=\"thonly-type\"><option value=\"ALL\">全部类型</option>")
+                .append("<option value=\"TOUHOU_ONLY\">THO</option><option value=\"TOUHOU_PARTY\">THP / 茶会</option>")
+                .append("<option value=\"SCHOOL_PARTY\">高校例会</option><option value=\"LIVE_OR_MUSIC\">Live / 音乐会</option></select></div>")
+                .append("<div class=\"thonly-filter-field thonly-extra-filter\"><label for=\"thonly-status\">活动状态</label>")
+                .append("<select id=\"thonly-status\"><option value=\"\">全部状态</option>");
+        appendOptions(html, rows, "status");
+        html.append("</select></div><div class=\"thonly-filter-field thonly-extra-filter\"><label for=\"thonly-month\">月份</label>")
+                .append("<select id=\"thonly-month\"><option value=\"\">全年</option>");
+        for (int month = 1; month <= 12; month++) {
+            html.append("<option value=\"").append(month).append("\">").append(month).append(" 月</option>");
+        }
+        html.append("</select></div></div><button type=\"button\" class=\"thonly-more-filters\" id=\"thonly-more-filters\"")
+                .append(" aria-expanded=\"false\" aria-controls=\"thonly-filter-fields\">更多筛选 · 类型 / 状态 / 月份</button>")
+                .append("<div class=\"thonly-quick-filters\" aria-label=\"快捷查询\">")
+                .append("<button type=\"button\" data-thonly-quick=\"all\" aria-pressed=\"true\">全部活动</button>")
+                .append("<button type=\"button\" data-thonly-quick=\"upcoming\" aria-pressed=\"false\">即将开始</button>")
+                .append("<button type=\"button\" data-thonly-quick=\"pending\" aria-pressed=\"false\">日期待定</button></div></section>");
+    }
 
-        // 表格：永远是文本（编辑在弹窗里做）
-        html.append("<table class=\"thonly-excel\" data-year=\"").append(year).append("\">");
-        html.append("<thead><tr>")
-                .append("<th style=\"width:8%\">状态</th>")
-                .append("<th style=\"width:29%\">名字</th>")
-                .append("<th style=\"width:17%\">地区</th>")
-                .append("<th style=\"width:17%\">日期</th>")
-                .append("<th style=\"width:13%\">QQ群</th>")
-                .append("<th style=\"width:16%\">操作</th>")
-                .append("</tr></thead><tbody>");
+    private static void appendOptions(StringBuilder html, List<Map<String, Object>> rows, String key) {
+        TreeSet<String> values = new TreeSet<>();
+        if ("region".equals(key)) {
+            values.addAll(ActivityRegions.PROVINCES);
+            values.addAll(ActivityRegions.COUNTRIES);
+            values.addAll(List.of("海外", "多地区"));
+        }
         for (Map<String, Object> row : rows) {
-            long id = row.get("id") instanceof Number number ? number.longValue() : 0;
-            String status = text(row.get("status"));
-            String name = text(row.get("name"));
-            String region = text(row.get("region"));
-            String date = text(row.get("date"));
-            String qq = text(row.get("qq"));
-            String category = text(row.get("category")).toUpperCase(Locale.ROOT);
-            String icsUrl = CalendarLinks.icsUrl(year, id, date);
-            html.append("<tr data-id=\"").append(id).append("\" data-category=\"").append(category)
-                    .append("\" data-status=\"").append(attr(status))
-                    .append("\" data-name=\"").append(attr(name))
-                    .append("\" data-region=\"").append(attr(region))
-                    .append("\" data-date=\"").append(attr(date))
-                    .append("\" data-qq=\"").append(attr(qq)).append("\">");
-            html.append("<td").append(status.contains("取消") ? " class=\"cancelled\"" : "").append(">")
-                    .append(esc(status.isEmpty() ? "—" : status)).append("</td>");
-            html.append("<td>").append(esc(name)).append("</td>");
-            html.append("<td>").append(esc(region)).append("</td>");
-            html.append("<td>").append(esc(date)).append("</td>");
-            html.append("<td>").append(esc(qq)).append("</td>");
-            html.append("<td class=\"thonly-actions\">");
-            if (canEdit) {
-                html.append("<a href=\"#\" class=\"thonly-edit\" role=\"button\">编辑</a>");
+            String value = text(row.get(key));
+            if ("region".equals(key)) {
+                value = ActivityRegions.canonicalize(value);
             }
-            if (icsUrl != null) {
-                html.append("<a href=\"").append(icsUrl)
-                        .append("\" download=\"\" title=\"下载 .ics，加入手机 / 电脑日历\">加入日历</a>");
+            if (!value.isBlank()) {
+                values.add(value);
             }
-            html.append("</td></tr>");
         }
-        html.append("</tbody></table>");
+        String currentGroup = null;
+        for (String value : "region".equals(key) ? ActivityRegions.ordered(values) : values) {
+            if ("region".equals(key)) {
+                String group = ActivityRegions.group(value);
+                if (!group.equals(currentGroup)) {
+                    if (currentGroup != null) { html.append("</optgroup>"); }
+                    html.append("<optgroup label=\"").append(group).append("\">");
+                    currentGroup = group;
+                }
+            }
+            html.append("<option value=\"").append(attr(value)).append("\">").append(esc(value)).append("</option>");
+        }
+        if (currentGroup != null) { html.append("</optgroup>"); }
+    }
 
+    private static void appendRow(StringBuilder html, int year, Map<String, Object> row, boolean canEdit) {
+        long id = row.get("id") instanceof Number number ? number.longValue() : 0;
+        String status = text(row.get("status"));
+        String name = text(row.get("name"));
+        String region = text(row.get("region"));
+        String date = text(row.get("date"));
+        String qq = text(row.get("qq"));
+        String category = text(row.get("category")).toUpperCase(Locale.ROOT);
+        String icsUrl = CalendarLinks.icsUrl(year, id, date);
+        String badgeClass = status.contains("取消") ? "is-cancelled"
+                : status.contains("计划") || status.contains("延期") ? "is-planned" : "";
+        html.append("<tr data-id=\"").append(id).append("\" data-category=\"").append(attr(category))
+                .append("\" data-status=\"").append(attr(status)).append("\" data-name=\"").append(attr(name))
+                .append("\" data-region=\"").append(attr(region)).append("\" data-date=\"").append(attr(date))
+                .append("\" data-qq=\"").append(attr(qq)).append("\">");
+        html.append("<td class=\"thonly-col-date\"><span class=\"thonly-date-value\">")
+                .append(esc(date.isBlank() || "暂无".equals(date) ? "日期待定" : date)).append("</span></td>");
+        html.append("<td class=\"thonly-col-status\"><span class=\"thonly-status-badge ").append(badgeClass)
+                .append("\">").append(esc(status.isBlank() ? "未填写" : status)).append("</span></td>");
+        html.append("<td class=\"thonly-col-name\"><button type=\"button\" class=\"thonly-detail\">")
+                .append(esc(name)).append("</button></td>");
+        html.append("<td class=\"thonly-col-region\"><span class=\"thonly-mobile-label\">地区 · </span>")
+                .append(esc(region.isBlank() ? "未填写" : region)).append("</td>");
+        html.append("<td class=\"thonly-col-type\"><span class=\"thonly-type-badge\">")
+                .append(esc(categoryLabel(category))).append("</span></td>");
+        html.append("<td class=\"thonly-col-qq\"><span class=\"thonly-mobile-label\">联络 · </span>")
+                .append(esc(qq.isBlank() ? "暂未公布" : qq)).append("</td><td class=\"thonly-actions\"><div>");
         if (canEdit) {
-            // 按钮不覆盖颜色：交给主站自己的 button 主题（避免「悬停变白」这类问题）
-            html.append("<div class=\"thonly-editor-bar\">")
-                    .append("<button type=\"button\" id=\"thonly-add\">添加活动</button>")
-                    .append("<button type=\"button\" id=\"thonly-history\">变更历史</button>")
-                    .append("</div>");
-            html.append(editDialog());
-            html.append(historyDialog());
+            html.append("<button type=\"button\" class=\"thonly-edit\">编辑</button>");
         }
-        if (canAdmin) {
-            html.append(aiBar(aiConfig.settings()));
-            html.append(aiConfigDialog());
-            html.append(aiImportDialog());
+        if (icsUrl != null) {
+            html.append("<a class=\"thonly-ics\" href=\"").append(icsUrl)
+                    .append("\" download=\"\" title=\"下载 .ics，加入手机 / 电脑日历\">加入日历</a>");
         }
+        html.append("</div></td></tr>");
+    }
 
-        html.append("<p class=\"thonly-message\" id=\"thonly-message\" hidden></p>");
-        html.append("</div>");
-        return html.toString();
+    private static String categoryLabel(String category) {
+        return switch (category) {
+            case "THO" -> "THO";
+            case "THP" -> "THP / 茶会";
+            case "SCHOOL" -> "高校例会";
+            case "LIVE" -> "Live / 音乐会";
+            default -> category.isBlank() ? "其他" : category;
+        };
+    }
+
+    private static String detailDialog(boolean canEdit) {
+        return "<div class=\"wiki-dialog-overlay thonly-modal\" id=\"thonly-detail-dialog\" hidden>"
+                + "<div class=\"wiki-dialog\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"thonly-detail-title\">"
+                + "<div class=\"wiki-dialog-title\"><span id=\"thonly-detail-title\">活动详情</span>"
+                + "<button type=\"button\" class=\"wiki-dialog-close\" aria-label=\"关闭\">×</button></div>"
+                + "<div class=\"wiki-dialog-body\"><dl class=\"thonly-detail-fields\">"
+                + "<dt>日期</dt><dd id=\"thonly-detail-date\"></dd>"
+                + "<dt>地区</dt><dd id=\"thonly-detail-region\"></dd>"
+                + "<dt>状态</dt><dd id=\"thonly-detail-status\"></dd>"
+                + "<dt>类型</dt><dd id=\"thonly-detail-type\"></dd>"
+                + "<dt>QQ群 / 联络信息</dt><dd><span id=\"thonly-detail-qq\"></span>"
+                + "<button type=\"button\" class=\"wiki-button\" id=\"thonly-copy-qq\">复制</button></dd></dl>"
+                + "<p class=\"thonly-footnote\">请以主办方最终公告为准。</p></div>"
+                + "<div class=\"wiki-dialog-actions\"><a id=\"thonly-detail-ics\" class=\"wiki-button\" download=\"\">加入日历</a>"
+                + (canEdit ? "<button type=\"button\" class=\"wiki-button wiki-button-primary\" id=\"thonly-detail-edit\">编辑活动</button>" : "")
+                + "</div></div></div>";
     }
 
     /** 管理员工具条：AI 整理与 AI 接口设置。 */
@@ -235,50 +320,41 @@ public class ActivityPageHook implements PageDisplayHook {
                 + "</div></div></div>";
     }
 
-    /** 编辑 / 添加弹窗（复用 core 的 {@code .wiki-dialog} 样式；字段由 activity.js 填 / 读）。 */
+    /** 编辑抽屉复用通用按钮与主题变量，保留现有字段 ID 和写接口。 */
     private static String editDialog() {
-        return "<div class=\"wiki-dialog-overlay\" id=\"thonly-dialog\" hidden>"
+        return "<div class=\"wiki-dialog-overlay thonly-modal thonly-edit-overlay\" id=\"thonly-dialog\" hidden>"
                 + "<div class=\"wiki-dialog\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"thonly-dialog-title\">"
                 + "<div class=\"wiki-dialog-title\"><span id=\"thonly-dialog-title\">编辑活动</span>"
                 + "<button type=\"button\" class=\"wiki-dialog-close\" aria-label=\"关闭\">×</button></div>"
-                + "<div class=\"wiki-dialog-body\"><div class=\"wiki-dialog-grid\">"
-                + "<label class=\"wiki-dialog-label\" for=\"thonly-f-status\">状态</label>"
-                + "<input type=\"text\" id=\"thonly-f-status\" maxlength=\"20\" placeholder=\"计划 / 定档 / 已取消…\"/>"
-                + "<label class=\"wiki-dialog-label\" for=\"thonly-f-category\">类型</label>"
-                + "<select id=\"thonly-f-category\">"
-                + "<option value=\"tho\">THO</option><option value=\"thp\">THP&amp;茶会</option>"
-                + "<option value=\"school\">高校例会</option><option value=\"live\">Live&amp;音乐会</option>"
-                + "</select>"
-                + "<label class=\"wiki-dialog-label\" for=\"thonly-f-name\">名字</label>"
-                + "<input type=\"text\" id=\"thonly-f-name\" style=\"grid-column: 2 / -1\"/>"
-                + "<label class=\"wiki-dialog-label\" for=\"thonly-f-region\">地区</label>"
-                + "<input type=\"text\" id=\"thonly-f-region\"/>"
-                + "<label class=\"wiki-dialog-label\" for=\"thonly-f-qq\">QQ群</label>"
-                + "<input type=\"text\" id=\"thonly-f-qq\"/>"
-                // 日期单独整行：日期选择器 + 「暂无」勾选（+ 旧数据非标准日期的提示）
-                + "<label class=\"wiki-dialog-label\" for=\"thonly-f-date\">日期</label>"
-                + "<div class=\"thonly-date-field\">"
-                + "<input type=\"date\" id=\"thonly-f-date\"/>"
-                + "<label class=\"wiki-dialog-check thonly-date-none\" title=\"日期未定，按「暂无」保存\">"
-                + "<input type=\"checkbox\" id=\"thonly-f-date-none\"/>暂无</label>"
-                + "<span class=\"thonly-date-hint\" id=\"thonly-f-date-hint\" hidden></span>"
-                + "</div>"
-                + "</div></div>"
-                // 按钮两行：第一行 保存 / 删除，第二行整行「取消」
-                + "<div class=\"wiki-dialog-actions thonly-dialog-actions\">"
-                + "<div class=\"thonly-dialog-main\">"
-                + "<button type=\"button\" id=\"thonly-save\" class=\"wiki-button wiki-button-primary\">保存</button>"
-                + "<button type=\"button\" id=\"thonly-delete\" class=\"wiki-button wiki-button-danger\" hidden>删除</button>"
-                + "</div>"
+                + "<form id=\"thonly-edit-form\"><div class=\"wiki-dialog-body\"><div class=\"thonly-edit-fields\">"
+                + "<div class=\"thonly-edit-wide\"><label for=\"thonly-f-name\">活动名称 <span aria-hidden=\"true\">*</span></label>"
+                + "<input type=\"text\" id=\"thonly-f-name\" required maxlength=\"255\"/></div>"
+                + "<div><label for=\"thonly-f-category\">活动类型</label><select id=\"thonly-f-category\">"
+                + "<option value=\"tho\">THO</option><option value=\"thp\">THP / 茶会</option>"
+                + "<option value=\"school\">高校例会</option><option value=\"live\">Live / 音乐会</option></select></div>"
+                + "<div><label for=\"thonly-f-status\">状态</label><input type=\"text\" id=\"thonly-f-status\" maxlength=\"20\""
+                + " placeholder=\"计划 / 定档 / 已取消…\"/></div>"
+                + "<div class=\"thonly-edit-wide\"><label for=\"thonly-f-region\">省份 / 地区</label>"
+                + "<select id=\"thonly-f-region\"></select></div>"
+                + "<div class=\"thonly-edit-wide\"><label for=\"thonly-f-date\">活动日期</label>"
+                + "<div class=\"thonly-date-field\"><input type=\"date\" id=\"thonly-f-date\"/>"
+                + "<label class=\"thonly-date-none\"><input type=\"checkbox\" id=\"thonly-f-date-none\"/>日期待定</label>"
+                + "<span class=\"thonly-date-hint\" id=\"thonly-f-date-hint\" hidden></span></div></div>"
+                + "<div class=\"thonly-edit-wide\"><label for=\"thonly-f-qq\">QQ群 / 联络信息（可选）</label>"
+                + "<input type=\"text\" id=\"thonly-f-qq\" maxlength=\"255\"/></div></div>"
+                + "<p class=\"thonly-edit-message\" id=\"thonly-edit-message\" role=\"alert\" hidden></p></div>"
+                + "<div class=\"wiki-dialog-actions\">"
+                + "<button type=\"button\" id=\"thonly-delete\" class=\"wiki-button wiki-button-quiet\" hidden>删除活动</button>"
                 + "<button type=\"button\" class=\"wiki-button thonly-dialog-cancel\">取消</button>"
-                + "</div></div></div>";
+                + "<button type=\"submit\" id=\"thonly-save\" class=\"wiki-button wiki-button-primary\">保存活动</button>"
+                + "</div></form></div></div>";
     }
 
     /** 变更历史弹窗（列表 + 每条一个「回滚」按钮，由 activity.js 填充）。 */
     private static String historyDialog() {
-        return "<div class=\"wiki-dialog-overlay\" id=\"thonly-history-dialog\" hidden>"
-                + "<div class=\"wiki-dialog\" role=\"dialog\" aria-modal=\"true\">"
-                + "<div class=\"wiki-dialog-title\"><span>变更历史</span>"
+        return "<div class=\"wiki-dialog-overlay thonly-modal\" id=\"thonly-history-dialog\" hidden>"
+                + "<div class=\"wiki-dialog\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"thonly-history-title\">"
+                + "<div class=\"wiki-dialog-title\"><span id=\"thonly-history-title\">变更历史</span>"
                 + "<button type=\"button\" class=\"wiki-dialog-close\" aria-label=\"关闭\">×</button></div>"
                 + "<div class=\"wiki-dialog-body\"><ul class=\"thonly-history-list\" id=\"thonly-history-list\"></ul></div>"
                 + "</div></div>";

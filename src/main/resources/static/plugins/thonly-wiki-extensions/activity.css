@@ -1,359 +1,916 @@
-/*
- * 活动速查表样式 —— 照 D:\wwwroot\THONLY_CC_PROJECT\excel（原站源码）移植：
- *   body / .thonly-app 白卡片 / .thonly-title / table.thonly-excel（#ddd 细线、表头 #f7f7f7、斑马纹、悬停）
- *   / a 链接（#007bff，悬停底色 #e7f0ff —— 不是白色！）/ 搜索框 / .thonly-condition 下拉 / .thonly-back-to-top
- *
- * 两处使用：
- *   1) 独立页 /excel（无 wiki 布局）：body.thonly-excel-page + .thonly-app，完全照原站（白卡片 + 大标题）；
- *   2) wiki 页面 /wiki/线下活动速查表：同一套**组件样式**（表格 / 搜索 / 下拉 / 链接），
- *      但不套白卡片、不放大标题、不放回到顶部（皮肤正文区本身就是容器）；
- *      按钮颜色一律交给主站自己的 button 主题，这里只做布局（避免「悬停变白」这类问题）。
- */
-
-/* ==================== 独立页 /excel（原站复刻） ==================== */
-body.thonly-excel-page {
-    font-family: '-apple-system', 'BlinkMacSystemFont', 'PingFang SC', 'Segoe UI Variable Display', 'Roboto',
-    'Helvetica Neue', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Yu Gothic UI', sans-serif;
-    background-color: #f4f4f4;
-    color: #333;
-    line-height: 1.6;
-    margin: 0;
-    padding: 0;
+/* 仅负责活动正文；颜色与尺寸沿用当前皮肤。独立 /excel 使用 activity-legacy.css。 */
+.thonly-activity-app, .thonly-activity-overlay {
+    --thonly-bg: var(--color-surface-1, var(--wiki-bg, #fff));
+    --thonly-soft: var(--color-surface-2, #f8f9fa);
+    --thonly-text: var(--color-base--emphasized, var(--wiki-text, #202122));
+    --thonly-muted: var(--color-base--subtle, #72777d);
+    --thonly-border: var(--border-color-base--darker, var(--wiki-border, #dce2eb));
+    --thonly-accent: var(--color-primary, var(--wiki-link, #36c));
+    --thonly-radius: var(--border-radius--medium, 8px);
+    --thonly-error: #b32424;
+    color: var(--thonly-text);
 }
 
-/* ==================== 共用外观 ==================== */
-.thonly-app {
-    width: 90%;
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 20px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    overflow-x: auto;
-}
-
-/* wiki 内嵌：皮肤正文区本身就是容器，不再套一层白卡片（只保留组件样式） */
 .thonly-activity-app {
-    width: auto;
-    max-width: none;
+    width: 100%;
+    min-width: 0;
     margin: 0;
     padding: 0;
     background: transparent;
-    border-radius: 0;
-    box-shadow: none;
 }
 
-.thonly-app .thonly-title {
-    font-size: 28px;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 20px;
-    color: #444;
+.thonly-activity-app *, .thonly-activity-overlay * {
+    box-sizing: border-box;
 }
 
-.thonly-app .thonly-logo {
-    text-align: center;
-    margin: 2px 0;
+.thonly-activity-app [hidden], .thonly-activity-overlay[hidden], .thonly-activity-overlay [hidden] {
+    display: none !important;
 }
 
-.thonly-app .thonly-logo img {
-    max-width: 100%;
-    height: auto;
+.thonly-activity-content {
+    container: thonly-activity / inline-size;
+    min-width: 0;
 }
 
-.thonly-app p {
-    margin: 20px 0;
+.thonly-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
 }
 
-.thonly-activity-app p {
-    margin: 0.6em 0;
+.thonly-activity-app :is(button,input,select,a,summary):focus-visible,
+.thonly-activity-overlay :is(button,input,select,a,summary):focus-visible {
+    outline: 2px solid var(--thonly-accent);
+    outline-offset: 3px;
 }
 
-.thonly-app a {
+.thonly-activity-app .thonly-intro {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px 16px;
+    margin: 0 0 20px;
+    color: var(--thonly-muted);
+    font-size: .88em;
+}
+
+.thonly-activity-app .thonly-intro p {
+    margin: 0;
+}
+
+.thonly-activity-app .thonly-community {
+    font-size: .92em;
+}
+
+.thonly-activity-app a {
+    color: var(--thonly-accent);
+}
+
+.thonly-activity-app .thonly-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px 20px;
+    flex-wrap: wrap;
+    margin: 0 0 16px;
+}
+
+.thonly-views {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    font-size: .9em;
+}
+
+.thonly-activity-app .thonly-views > * {
+    display: block;
+    padding: 10px 0;
+    border-bottom: 3px solid transparent;
+    color: var(--thonly-muted);
     text-decoration: none;
-    color: #007bff;
-    font-weight: bold;
-    transition: color 0.3s ease, background-color 0.3s ease;
-    border-radius: 4px;
-    padding: 4px 8px;
 }
 
-.thonly-app a:hover {
-    color: #0056b3;
-    background-color: #e7f0ff;
+.thonly-activity-app .thonly-views > a:hover {
+    color: var(--thonly-accent);
 }
 
-.thonly-app a:active {
-    color: #006bda;
-    background-color: #e7f0ff;
-    padding: 3px 6px;
-}
-
-/* 表格：原站 table.excel 的观感；**固定比例**（table-layout: fixed + 百分比列宽），
-   宽屏也不会横向滚动（以前 nowrap 会把表格撑出容器） */
-.thonly-app table.thonly-excel {
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-}
-
-.thonly-app table.thonly-excel,
-.thonly-app table.thonly-excel th,
-.thonly-app table.thonly-excel td {
-    border: 1px solid #ddd;
-}
-
-.thonly-app table.thonly-excel th,
-.thonly-app table.thonly-excel td {
-    padding: 10px 12px;
-    text-align: left;
-    white-space: normal;
-    overflow-wrap: break-word;
-}
-
-.thonly-app table.thonly-excel th {
-    background-color: #f7f7f7;
-    color: #555;
-    text-transform: uppercase;
+.thonly-activity-app .thonly-views .is-current {
+    color: var(--thonly-accent);
+    border-bottom-color: var(--thonly-accent);
     font-weight: 600;
 }
 
-.thonly-app table.thonly-excel tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-.thonly-app table.thonly-excel tbody tr:hover {
-    background-color: #f1f1f1;
-}
-
-/* 已取消 / 状态色（原站 .cancelled = 红粗体） */
-.thonly-app .cancelled {
-    color: red;
-    font-weight: bold;
-}
-
-/* 操作列：文字链接（编辑 / 加入日历）之间的间距 */
-.thonly-app table.thonly-excel td.thonly-actions {
-    white-space: nowrap;
-}
-
-.thonly-app table.thonly-excel td.thonly-actions a + a {
-    margin-left: 0.75em;
-}
-
-/* 搜索框（原站 #search；居中的整行，宽度足够） */
-.thonly-app .thonly-search-container {
-    margin: 0 0 0.6em;
-    text-align: center;
-}
-
-.thonly-app input.thonly-search {
-    display: block;
-    box-sizing: border-box;
-    margin: 0 auto;
-    padding: 8px 12px;
-    width: 100%;
-    max-width: 560px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-    font-size: 16px;
-    outline: none;
-}
-
-.thonly-app input.thonly-search:focus {
-    border-color: #66afe9;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-}
-
-/* 下拉筛选（原站 .condition：一行两个 select，居中） */
-.thonly-app .thonly-condition {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    border: 0;
-    margin: 0 0 14px;
-    padding: 0;
-    text-align: center;
-}
-
-.thonly-app .thonly-condition select {
-    display: inline-block;
-    box-sizing: border-box;
-    text-align: center;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    padding: 0.5em;
-    width: 10em;
-    outline: none;
-    font-size: 14px;
-    background: #fff;
-}
-
-.thonly-app .thonly-condition select:focus {
-    border-color: #66afe9;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-}
-
-/* 编辑区（只在 wiki 页面对有权限的人显示；按钮颜色交给主站 button 主题，这里不动） */
-.thonly-activity-app .thonly-editor-bar {
+.thonly-management {
     display: flex;
     flex-wrap: wrap;
+    gap: 8px;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin: 14px 0 4px;
+    margin-inline-start: auto;
 }
 
-/* 变更历史弹窗里的列表 */
-.thonly-history-list {
-    margin: 0;
-    padding-left: 1.1em;
-    line-height: 2;
+.thonly-management .wiki-button {
+    font-size: .85em;
 }
 
-.thonly-history-list li + li {
-    margin-top: 2px;
+.thonly-admin-tools {
+    position: relative;
+    font-size: .85em;
 }
 
-.thonly-history-list button {
-    margin-left: 6px;
+.thonly-admin-tools summary {
+    cursor: pointer;
+    color: var(--thonly-muted);
+    padding: 8px;
 }
 
-/* 编辑 / 添加弹窗：按钮两行 —— 第一行 保存 / 删除，第二行整行「取消」
-   按钮外观全部交给 core 的通用组件（.wiki-button-*，颜色由皮肤变量控制），这里只做布局 */
-.thonly-activity-app .thonly-dialog-actions {
+.thonly-activity-app .thonly-ai-bar {
+    position: absolute;
+    inset-inline-end: 0;
+    top: 100%;
+    display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
+    min-width: 150px;
+    z-index: 5;
+    background: var(--thonly-bg);
+    border: 1px solid var(--thonly-border);
+    border-radius: var(--thonly-radius);
+    padding: 10px;
+    box-shadow: 0 4px 18px #00000012;
 }
 
-.thonly-activity-app .thonly-dialog-main {
+.thonly-activity-app .thonly-filters {
+    background: var(--thonly-bg);
+    border: 1px solid var(--thonly-border);
+    border-radius: var(--thonly-radius);
+    padding: 18px;
+}
+
+.thonly-search-row {
     display: flex;
-    gap: 8px;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 15px;
 }
 
-.thonly-activity-app .thonly-dialog-main > button {
-    flex: 1 1 0;
+.thonly-search-row .wiki-button {
+    flex-shrink: 0;
+    font-size: .85em;
 }
 
-.thonly-activity-app .thonly-dialog-cancel {
+.thonly-activity-app input.thonly-search {
+    flex: 1;
+    min-width: 0;
     width: 100%;
-    box-sizing: border-box;
+    margin: 0;
 }
 
-/* 日期一行（整行）：日期选择器 + 「暂无」勾选 + 旧值提示。
-   旧版把日期塞进四列网格的小格子里，「暂无」会换行掉到下面 —— 现在整行铺开、和其他控件同一套尺寸。 */
-.thonly-activity-app .thonly-date-field {
+.thonly-filter-fields {
+    display: grid;
+    grid-template-columns: .8fr 1.25fr 1.15fr 1fr .8fr;
+    gap: 14px;
+}
+
+.thonly-filter-field {
+    min-width: 0;
+}
+
+.thonly-filter-field label {
+    display: block;
+    color: var(--thonly-muted);
+    font-size: .8em;
+    margin-bottom: 6px;
+}
+
+.thonly-activity-app .thonly-filters :is(input,select),
+.thonly-activity-overlay .thonly-edit-fields :is(input:not([type=checkbox]),select) {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 40px;
+    padding: 7px 10px;
+    border: 1px solid var(--thonly-border);
+    border-radius: var(--border-radius--small,4px);
+    background: var(--thonly-bg);
+    color: var(--thonly-text);
+    font: inherit;
+    font-size: .88em;
+    box-shadow: none;
+}
+
+.thonly-activity-app .thonly-filters input:focus, .thonly-activity-app .thonly-filters select:focus {
+    border-color: var(--thonly-accent);
+}
+
+.thonly-more-filters {
+    display: none;
+}
+
+.thonly-quick-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-top: 1px solid var(--thonly-border);
+    margin-top: 16px;
+    padding-top: 13px;
+}
+
+.thonly-activity-app .thonly-quick-filters button {
+    padding: 5px 11px;
+    border: 1px solid transparent;
+    background: var(--thonly-soft);
+    border-radius: var(--border-radius--small,4px);
+    color: var(--thonly-muted);
+    font: inherit;
+    font-size: .78em;
+    cursor: pointer;
+}
+
+.thonly-activity-app .thonly-quick-filters button[aria-pressed=true] {
+    color: var(--thonly-accent);
+    border-color: var(--thonly-accent);
+    background: var(--thonly-soft);
+    background: color-mix(in srgb,var(--thonly-accent) 9%,var(--thonly-bg));
+}
+
+.thonly-results-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 5px 15px;
+    margin: 22px 0 12px;
+    font-size: .9em;
+}
+
+.thonly-results-heading > span {
+    color: var(--thonly-muted);
+    font-size: .82em;
+}
+
+#thonly-result-count {
+    color: var(--thonly-accent);
+    font-size: .88em;
+    margin-inline-start: 5px;
+    font-weight: 400;
+}
+
+.thonly-table-panel {
+    border: 1px solid var(--thonly-border);
+    border-radius: var(--thonly-radius);
+    overflow: hidden;
+    background: var(--thonly-bg);
+}
+
+.thonly-activity-app table.thonly-excel {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin: 0;
+    border: 0;
+    color: var(--thonly-text);
+    background: transparent;
+    font-size: .84em;
+}
+
+.thonly-activity-app table.thonly-excel th, .thonly-activity-app table.thonly-excel td {
+    padding: 14px 12px;
+    text-align: start;
+    border: 0;
+    border-bottom: 1px solid var(--thonly-border);
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+    background: transparent;
+}
+
+.thonly-activity-app table.thonly-excel th {
+    background: var(--thonly-soft);
+    color: var(--thonly-muted);
+    font-size: .9em;
+    font-weight: 500;
+}
+
+.thonly-activity-app table.thonly-excel th:nth-child(1) {
+    width: 13%;
+}
+
+.thonly-activity-app table.thonly-excel th:nth-child(2) {
+    width: 9%;
+}
+
+.thonly-activity-app table.thonly-excel th:nth-child(3) {
+    width: 26%;
+}
+
+.thonly-activity-app table.thonly-excel th:nth-child(4) {
+    width: 12%;
+}
+
+.thonly-activity-app table.thonly-excel th:nth-child(5) {
+    width: 11%;
+}
+
+.thonly-activity-app table.thonly-excel th:nth-child(6) {
+    width: 17%;
+}
+
+.thonly-activity-app table.thonly-excel th:nth-child(7) {
+    width: 12%;
+}
+
+.thonly-activity-app table.thonly-excel tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.thonly-activity-app table.thonly-excel tbody tr:hover {
+    background: var(--thonly-soft);
+}
+
+.thonly-activity-app .thonly-detail, .thonly-activity-app .thonly-edit {
+    display: inline;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--thonly-accent);
+    cursor: pointer;
+    font: inherit;
+    text-align: start;
+    overflow-wrap: anywhere;
+}
+
+.thonly-activity-app .thonly-detail {
+    font-weight: 600;
+}
+
+.thonly-activity-app .thonly-detail:hover, .thonly-activity-app .thonly-edit:hover {
+    text-decoration: underline;
+}
+
+.thonly-activity-app :is(.thonly-detail,.thonly-edit,.thonly-more-filters),
+.thonly-activity-app .thonly-quick-filters button {
+    box-shadow: none;
+    text-shadow: none;
+    transform: none;
+    min-height: 0;
+}
+
+.thonly-activity-app .thonly-filters select,
+.thonly-activity-overlay .thonly-edit-fields select {
+    appearance: auto;
+    background-image: none;
+    padding-inline-end: 26px;
+}
+
+.thonly-status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: var(--border-radius--small,4px);
+    font-size: .82em;
+    line-height: 1.5;
+    color: #147456;
+    background: #1a9a7012;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.thonly-status-badge.is-planned {
+    color: #92630a;
+    background: #c28a1612;
+}
+
+.thonly-status-badge.is-cancelled {
+    color: #ae4249;
+    background: #bb455112;
+}
+
+.thonly-type-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border: 1px solid var(--thonly-border);
+    border-radius: var(--border-radius--small,4px);
+    color: var(--thonly-muted);
+    font-size: .8em;
+    line-height: 1.5;
+}
+
+.thonly-date-value {
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+}
+
+.thonly-col-qq {
+    color: var(--thonly-muted);
+    font-variant-numeric: tabular-nums;
+    font-size: .9em;
+}
+
+.thonly-actions > div {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px 14px;
-    grid-column: 2 / -1;
+    gap: 7px 12px;
 }
 
-.thonly-activity-app .thonly-date-field input[type="date"] {
-    flex: 0 1 12em;
-    min-width: 9em;
+.thonly-activity-app .thonly-actions a {
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.thonly-activity-app .thonly-actions a:hover {
+    text-decoration: underline;
+}
+
+.thonly-mobile-label {
+    display: none;
+}
+
+.thonly-empty {
+    padding: 36px 16px;
+    text-align: center;
+    color: var(--thonly-muted);
+}
+
+.thonly-empty button {
+    display: block;
+    margin: 12px auto 0;
+}
+
+.thonly-activity-app .thonly-footnote, .thonly-activity-overlay .thonly-footnote {
+    margin: 12px 0;
+    color: var(--thonly-muted);
+    font-size: .78em;
+}
+
+.thonly-activity-app .thonly-message {
+    position: fixed;
+    inset-inline-start: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    padding: 10px 18px;
+    margin: 0;
+    border-radius: var(--thonly-radius);
+    background: #263344;
+    color: white;
+    font-size: .85em;
+    z-index: 1200;
+    overflow-wrap: anywhere;
+}
+
+.thonly-activity-app .thonly-message.is-error {
+    background: #a32b35;
+}
+
+/* 抽屉与弹窗移至 body；避免主题动画和正文容器裁切 fixed 遮罩。 */
+body.thonly-dialog-open {
+    overflow: hidden;
+}
+
+.thonly-activity-overlay {
+    padding: 16px;
+}
+
+.thonly-activity-overlay .wiki-dialog {
+    width: 520px;
+    max-width: 100%;
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
+    color: var(--thonly-text);
+    background: var(--thonly-bg);
+    border: 1px solid var(--thonly-border);
+    border-radius: var(--thonly-radius);
+}
+
+.thonly-activity-overlay .thonly-ai-dialog {
+    width: min(920px,94vw);
+}
+
+.thonly-activity-overlay .wiki-button {
+    color: var(--thonly-text);
+    background: var(--thonly-soft);
+    border: 1px solid var(--thonly-border);
+}
+
+.thonly-activity-overlay .wiki-button:hover {
+    background: var(--background-color-quiet--hover, #eaecf0);
+    color: var(--thonly-text);
+}
+
+.thonly-activity-overlay .wiki-button-primary {
+    background: var(--wiki-button-primary-bg,var(--thonly-accent));
+    border-color: var(--thonly-accent);
+    color: var(--wiki-button-primary-text,#fff);
+}
+
+.thonly-activity-overlay .wiki-button-primary:hover {
+    background: var(--wiki-button-primary-bg-hover,var(--thonly-accent));
+    color: var(--wiki-button-primary-text,#fff);
+}
+
+.thonly-activity-overlay .wiki-dialog-title {
+    padding: 18px 22px;
+    gap: 12px;
+    background: var(--thonly-bg);
+    color: var(--thonly-text);
+    border-color: var(--thonly-border);
+}
+
+.thonly-activity-overlay .wiki-dialog-title > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.thonly-activity-overlay .wiki-dialog-close {
+    flex-shrink: 0;
+    color: var(--thonly-muted);
+}
+
+.thonly-activity-overlay .wiki-dialog-body {
+    padding: 22px;
+    color: var(--thonly-text);
+}
+
+.thonly-activity-overlay .wiki-dialog-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 22px;
+    border-top: 1px solid var(--thonly-border);
+    background: var(--thonly-bg);
+}
+
+.thonly-activity-overlay :is(input:not([type=checkbox]),select,textarea) {
+    color: var(--thonly-text);
+    background: var(--thonly-bg);
+    border-color: var(--thonly-border);
+}
+
+.thonly-activity-overlay.thonly-edit-overlay {
+    justify-content: flex-end;
+    align-items: stretch;
+    padding: 0;
+}
+
+.thonly-edit-overlay .wiki-dialog {
+    display: flex;
+    flex-direction: column;
+    width: 480px;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: var(--thonly-radius) 0 0 var(--thonly-radius);
+    overflow: hidden;
+}
+
+.thonly-edit-overlay .wiki-dialog-title {
+    flex-shrink: 0;
+}
+
+#thonly-edit-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+}
+
+#thonly-edit-form .wiki-dialog-body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+#thonly-edit-form .wiki-dialog-actions {
+    flex-shrink: 0;
+}
+
+.thonly-edit-fields {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 20px 16px;
+}
+
+.thonly-edit-fields > div {
+    min-width: 0;
+}
+
+.thonly-edit-fields .thonly-edit-wide {
+    grid-column: 1 / -1;
+}
+
+.thonly-activity-overlay .thonly-edit-fields label {
+    display: block;
+    margin: 0 0 7px;
+    font-size: .88em;
+    font-weight: 400;
+}
+
+.thonly-date-field {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+}
+
+.thonly-activity-overlay .thonly-date-field input[type=date] {
+    flex: 1 1 180px;
     width: auto;
+    min-width: 0;
 }
 
-/* 「暂无」勾选：沿用 core 弹窗里的复选框样式（.wiki-dialog-check），只去掉多余边距 */
-.thonly-activity-app .thonly-date-none {
+.thonly-activity-overlay .thonly-edit-fields .thonly-date-none {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 6px;
     margin: 0;
     white-space: nowrap;
 }
 
-/* 勾上「暂无」后日期选择器禁用：虚线边框 + 更淡的底色，一眼能看出“时间未定” */
-.thonly-activity-app .thonly-date-field input[type="date"]:disabled {
-    border-style: dashed;
-    background: #fafafa;
-    color: #a2a9b1;
+.thonly-date-none input {
+    accent-color: var(--thonly-accent);
 }
 
-.thonly-activity-app .thonly-date-hint {
+.thonly-date-hint {
     flex-basis: 100%;
+    font-size: .78em;
+    color: var(--thonly-muted);
+    overflow-wrap: anywhere;
+}
+
+.thonly-edit-message {
+    color: var(--thonly-error);
+    font-size: .88em;
+    overflow-wrap: anywhere;
+}
+
+#thonly-delete {
+    margin-inline-end: auto;
+    color: var(--thonly-error);
+}
+
+.thonly-detail-fields {
+    display: grid;
+    grid-template-columns: auto minmax(0,1fr);
+    gap: 16px 20px;
     margin: 0;
-    color: #72777d;
-    font-size: 0.86em;
+    font-size: .9em;
 }
 
-/* 提示条 */
-.thonly-app .thonly-message {
-    position: fixed;
-    left: 50%;
-    bottom: 24px;
-    transform: translateX(-50%);
-    padding: 0.6em 1.1em;
-    border-radius: 4px;
-    background: #333;
-    color: #fff;
-    font-size: 0.9em;
-    z-index: 20;
+.thonly-detail-fields dt {
+    color: var(--thonly-muted);
 }
 
-.thonly-app .thonly-message.is-error {
-    background: #b32424;
+.thonly-detail-fields dd {
+    margin: 0;
+    overflow-wrap: anywhere;
 }
 
-/* 回到顶部（原站 tool.css；只有独立页 /excel 用，wiki 页面皮肤自带） */
-.thonly-back-to-top {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background-color: #757575;
-    color: #fff;
-    opacity: 0.7;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    z-index: 10;
+#thonly-copy-qq {
+    display: block;
+    margin-top: 10px;
+    font-size: .82em;
 }
 
-.thonly-back-to-top svg {
-    width: 24px;
-    height: 24px;
-    fill: #fff;
+.thonly-history-list {
+    margin: 0;
+    padding-inline-start: 20px;
+    font-size: .9em;
+    overflow-wrap: anywhere;
 }
 
-@media (max-width: 768px) {
-    .thonly-app {
-        width: 100%;
-        margin: 0;
+.thonly-history-list li + li {
+    margin-top: 14px;
+}
+
+.thonly-history-list button {
+    margin-inline-start: 8px;
+}
+
+.skin-timeless-dark :is(.thonly-activity-app,.thonly-activity-overlay) {
+    --thonly-error: #ff939f;
+    color-scheme: dark;
+}
+
+.skin-timeless-dark .thonly-status-badge {
+    color: #6cdbb2;
+    background: #3bc89a18;
+}
+
+.skin-timeless-dark .thonly-status-badge.is-planned {
+    color: #edc36e;
+    background: #deb44b18;
+}
+
+.skin-timeless-dark .thonly-status-badge.is-cancelled {
+    color: #f38a96;
+    background: #e66c7b18;
+}
+
+@container thonly-activity (max-width:860px) {
+    .thonly-activity-app .thonly-table-panel {
+        overflow: visible;
+        border: 0;
+        background: transparent;
         border-radius: 0;
-        box-shadow: none;
     }
 
-    .thonly-app .thonly-title {
-        font-size: 24px;
-        margin-bottom: 15px;
-    }
-
-    .thonly-app table.thonly-excel,
-    .thonly-app table.thonly-excel th,
-    .thonly-app table.thonly-excel td {
-        border: none;
-    }
-
-    .thonly-app table.thonly-excel th,
-    .thonly-app table.thonly-excel td {
-        padding: 10px;
-        font-size: 14px;
-        white-space: normal;
-    }
-
-    .thonly-app table.thonly-excel {
+    .thonly-activity-app table.thonly-excel, .thonly-activity-app table.thonly-excel tbody {
         display: block;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
     }
+
+    .thonly-activity-app table.thonly-excel thead {
+        display: none;
+    }
+
+    .thonly-activity-app table.thonly-excel tbody {
+        display: grid;
+        gap: 12px;
+    }
+
+    .thonly-activity-app table.thonly-excel tbody tr {
+        display: grid;
+        grid-template-columns: minmax(0,1fr) max-content;
+        grid-template-areas: "name status" "date type" "region region" "qq qq" "actions actions";
+        align-items: start;
+        gap: 8px 14px;
+        padding: 16px;
+        border: 1px solid var(--thonly-border);
+        border-radius: var(--thonly-radius);
+        background: var(--thonly-bg);
+    }
+
+    .thonly-activity-app table.thonly-excel td {
+        display: block;
+        padding: 0;
+        border: 0;
+        min-width: 0;
+    }
+
+    .thonly-activity-app table.thonly-excel .thonly-col-name {
+        grid-area: name;
+    }
+
+    .thonly-activity-app table.thonly-excel .thonly-col-status {
+        grid-area: status;
+        justify-self: end;
+        text-align: end;
+        max-width: 32cqw;
+    }
+
+    .thonly-activity-app table.thonly-excel .thonly-col-date {
+        grid-area: date;
+        align-self: center;
+    }
+
+    .thonly-activity-app table.thonly-excel .thonly-col-type {
+        grid-area: type;
+        justify-self: end;
+        text-align: end;
+        max-width: 36cqw;
+    }
+
+    .thonly-activity-app table.thonly-excel .thonly-col-region {
+        grid-area: region;
+        color: var(--thonly-muted);
+        font-size: .9em;
+    }
+
+    .thonly-activity-app table.thonly-excel .thonly-col-qq {
+        grid-area: qq;
+    }
+
+    .thonly-activity-app table.thonly-excel .thonly-actions {
+        grid-area: actions;
+        border-top: 1px solid var(--thonly-border);
+        margin-top: 4px;
+        padding-top: 11px;
+    }
+
+    .thonly-activity-app .thonly-actions > div {
+        justify-content: flex-end;
+    }
+
+    .thonly-activity-app .thonly-mobile-label {
+        display: inline;
+    }
+
+    .thonly-activity-app .thonly-detail {
+        font-size: 1.08em;
+    }
+
+    .thonly-activity-app .thonly-filter-fields {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+        gap: 12px;
+    }
+
+    .thonly-filter-field:last-child {
+        grid-column: 1 / -1;
+    }
+
+}
+
+@container thonly-activity (max-width:580px) {
+    .thonly-activity-app .thonly-filters {
+        padding: 14px;
+    }
+
+    .thonly-activity-app .thonly-extra-filter {
+        display: none;
+    }
+
+    .thonly-activity-app .thonly-filters.is-expanded .thonly-extra-filter {
+        display: block;
+    }
+
+    .thonly-activity-app .thonly-more-filters {
+        display: block;
+        margin-top: 12px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--thonly-muted);
+        cursor: pointer;
+        font: inherit;
+        font-size: .78em;
+    }
+
+    .thonly-activity-app .thonly-filters :is(input,select) {
+        font-size: 16px;
+    }
+
+    .thonly-activity-app .thonly-search-row {
+        gap: 8px;
+    }
+
+    .thonly-activity-app .thonly-search-row .wiki-button {
+        padding-inline: 5px;
+        font-size: .75em;
+    }
+
+    .thonly-activity-app .thonly-views {
+        gap: 16px;
+    }
+
+    .thonly-activity-app .thonly-toolbar {
+        gap: 8px;
+    }
+
+    .thonly-activity-app .thonly-management {
+        gap: 7px;
+    }
+
+    .thonly-activity-app .thonly-intro {
+        font-size: .8em;
+        margin-bottom: 14px;
+    }
+
+    .thonly-activity-app .thonly-results-heading {
+        margin-top: 18px;
+    }
+
+}
+
+@media (max-width:520px) {
+    .thonly-edit-overlay .wiki-dialog {
+        width: 100%;
+        border-radius: 0;
+    }
+
+    .thonly-activity-overlay .thonly-edit-fields :is(input:not([type=checkbox]),select) {
+        font-size: 16px;
+    }
+
+    .thonly-activity-overlay .wiki-dialog-title {
+        padding: 16px;
+    }
+
+    .thonly-activity-overlay .wiki-dialog-body {
+        padding: 18px 16px;
+    }
+
+    .thonly-activity-overlay .wiki-dialog-actions {
+        padding: 14px 16px;
+    }
+
+    .thonly-detail-fields {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .thonly-detail-fields dd {
+        margin-bottom: 14px;
+    }
+
 }

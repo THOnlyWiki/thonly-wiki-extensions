@@ -39,14 +39,17 @@ public class ActivityHeadProvider implements HtmlHeadProvider {
         String title = context.pageTitle();
         if (ThonlyActivitySchedulePlugin.PAGE_TITLE.equals(title)) {
             return List.of(
-                    "<link rel=\"stylesheet\" href=\"/plugins/thonly-wiki-extensions/activity.css\">",
+                    "<link rel=\"stylesheet\" href=\"/plugins/thonly-wiki-extensions/activity-toolbar.css?v=1\">",
+                    "<link rel=\"stylesheet\" href=\"/plugins/thonly-wiki-extensions/activity.css?v=2\">",
                     "<link rel=\"stylesheet\" href=\"/plugins/thonly-wiki-extensions/activity-ai.css\">",
-                    "<script defer src=\"/plugins/thonly-wiki-extensions/activity.js\"></script>",
+                    "<script defer src=\"/plugins/thonly-wiki-extensions/activity-regions.js?v=3\"></script>",
+                    "<script defer src=\"/plugins/thonly-wiki-extensions/activity.js?v=3\"></script>",
                     "<script defer src=\"/plugins/thonly-wiki-extensions/activity-ai.js\"></script>");
         }
         if (ThonlyActivitySchedulePlugin.MAP_PAGE_TITLE.equals(title)) {
             // ECharts（~2.5MB）只在「活动分布地图」这一个页面加载
             return List.of(
+                    "<link rel=\"stylesheet\" href=\"/plugins/thonly-wiki-extensions/activity-toolbar.css?v=1\">",
                     "<link rel=\"stylesheet\" href=\"/plugins/thonly-wiki-extensions/activity-map.css\">",
                     "<script defer src=\"/plugins/thonly-wiki-extensions/map/echarts.min.js\"></script>",
                     "<script defer src=\"/plugins/thonly-wiki-extensions/map/china.js\"></script>",

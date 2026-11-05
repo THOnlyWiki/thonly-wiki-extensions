@@ -36,6 +36,7 @@ public class CalendarPageHook implements PageDisplayHook {
 
     private String render() {
         return "<div class=\"thonly-calendar-app\">"
+                + ActivityToolbar.render(PAGE_TITLE)
                 + TouhouCalendarTag.CONTAINER_HTML
                 + "</div>";
     }

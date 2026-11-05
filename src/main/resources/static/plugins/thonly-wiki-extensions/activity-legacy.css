@@ -1,0 +1,359 @@
+/*
+ * 活动速查表样式 —— 照 D:\wwwroot\THONLY_CC_PROJECT\excel（原站源码）移植：
+ *   body / .thonly-app 白卡片 / .thonly-title / table.thonly-excel（#ddd 细线、表头 #f7f7f7、斑马纹、悬停）
+ *   / a 链接（#007bff，悬停底色 #e7f0ff —— 不是白色！）/ 搜索框 / .thonly-condition 下拉 / .thonly-back-to-top
+ *
+ * 两处使用：
+ *   1) 独立页 /excel（无 wiki 布局）：body.thonly-excel-page + .thonly-app，完全照原站（白卡片 + 大标题）；
+ *   2) wiki 页面 /wiki/线下活动速查表：同一套**组件样式**（表格 / 搜索 / 下拉 / 链接），
+ *      但不套白卡片、不放大标题、不放回到顶部（皮肤正文区本身就是容器）；
+ *      按钮颜色一律交给主站自己的 button 主题，这里只做布局（避免「悬停变白」这类问题）。
+ */
+
+/* ==================== 独立页 /excel（原站复刻） ==================== */
+body.thonly-excel-page {
+    font-family: '-apple-system', 'BlinkMacSystemFont', 'PingFang SC', 'Segoe UI Variable Display', 'Roboto',
+    'Helvetica Neue', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Yu Gothic UI', sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
+
+/* ==================== 共用外观 ==================== */
+.thonly-app {
+    width: 90%;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+}
+
+/* wiki 内嵌：皮肤正文区本身就是容器，不再套一层白卡片（只保留组件样式） */
+.thonly-activity-app {
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.thonly-app .thonly-title {
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #444;
+}
+
+.thonly-app .thonly-logo {
+    text-align: center;
+    margin: 2px 0;
+}
+
+.thonly-app .thonly-logo img {
+    max-width: 100%;
+    height: auto;
+}
+
+.thonly-app p {
+    margin: 20px 0;
+}
+
+.thonly-activity-app p {
+    margin: 0.6em 0;
+}
+
+.thonly-app a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+    transition: color 0.3s ease, background-color 0.3s ease;
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+
+.thonly-app a:hover {
+    color: #0056b3;
+    background-color: #e7f0ff;
+}
+
+.thonly-app a:active {
+    color: #006bda;
+    background-color: #e7f0ff;
+    padding: 3px 6px;
+}
+
+/* 表格：原站 table.excel 的观感；**固定比例**（table-layout: fixed + 百分比列宽），
+   宽屏也不会横向滚动（以前 nowrap 会把表格撑出容器） */
+.thonly-app table.thonly-excel {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.thonly-app table.thonly-excel,
+.thonly-app table.thonly-excel th,
+.thonly-app table.thonly-excel td {
+    border: 1px solid #ddd;
+}
+
+.thonly-app table.thonly-excel th,
+.thonly-app table.thonly-excel td {
+    padding: 10px 12px;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+.thonly-app table.thonly-excel th {
+    background-color: #f7f7f7;
+    color: #555;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.thonly-app table.thonly-excel tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.thonly-app table.thonly-excel tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* 已取消 / 状态色（原站 .cancelled = 红粗体） */
+.thonly-app .cancelled {
+    color: red;
+    font-weight: bold;
+}
+
+/* 操作列：文字链接（编辑 / 加入日历）之间的间距 */
+.thonly-app table.thonly-excel td.thonly-actions {
+    white-space: nowrap;
+}
+
+.thonly-app table.thonly-excel td.thonly-actions a + a {
+    margin-left: 0.75em;
+}
+
+/* 搜索框（原站 #search；居中的整行，宽度足够） */
+.thonly-app .thonly-search-container {
+    margin: 0 0 0.6em;
+    text-align: center;
+}
+
+.thonly-app input.thonly-search {
+    display: block;
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 8px 12px;
+    width: 100%;
+    max-width: 560px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+    outline: none;
+}
+
+.thonly-app input.thonly-search:focus {
+    border-color: #66afe9;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* 下拉筛选（原站 .condition：一行两个 select，居中） */
+.thonly-app .thonly-condition {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    border: 0;
+    margin: 0 0 14px;
+    padding: 0;
+    text-align: center;
+}
+
+.thonly-app .thonly-condition select {
+    display: inline-block;
+    box-sizing: border-box;
+    text-align: center;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    padding: 0.5em;
+    width: 10em;
+    outline: none;
+    font-size: 14px;
+    background: #fff;
+}
+
+.thonly-app .thonly-condition select:focus {
+    border-color: #66afe9;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* 编辑区（只在 wiki 页面对有权限的人显示；按钮颜色交给主站 button 主题，这里不动） */
+.thonly-activity-app .thonly-editor-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 14px 0 4px;
+}
+
+/* 变更历史弹窗里的列表 */
+.thonly-history-list {
+    margin: 0;
+    padding-left: 1.1em;
+    line-height: 2;
+}
+
+.thonly-history-list li + li {
+    margin-top: 2px;
+}
+
+.thonly-history-list button {
+    margin-left: 6px;
+}
+
+/* 编辑 / 添加弹窗：按钮两行 —— 第一行 保存 / 删除，第二行整行「取消」
+   按钮外观全部交给 core 的通用组件（.wiki-button-*，颜色由皮肤变量控制），这里只做布局 */
+.thonly-activity-app .thonly-dialog-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.thonly-activity-app .thonly-dialog-main {
+    display: flex;
+    gap: 8px;
+}
+
+.thonly-activity-app .thonly-dialog-main > button {
+    flex: 1 1 0;
+}
+
+.thonly-activity-app .thonly-dialog-cancel {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 日期一行（整行）：日期选择器 + 「暂无」勾选 + 旧值提示。
+   旧版把日期塞进四列网格的小格子里，「暂无」会换行掉到下面 —— 现在整行铺开、和其他控件同一套尺寸。 */
+.thonly-activity-app .thonly-date-field {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    grid-column: 2 / -1;
+}
+
+.thonly-activity-app .thonly-date-field input[type="date"] {
+    flex: 0 1 12em;
+    min-width: 9em;
+    width: auto;
+}
+
+/* 「暂无」勾选：沿用 core 弹窗里的复选框样式（.wiki-dialog-check），只去掉多余边距 */
+.thonly-activity-app .thonly-date-none {
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* 勾上「暂无」后日期选择器禁用：虚线边框 + 更淡的底色，一眼能看出“时间未定” */
+.thonly-activity-app .thonly-date-field input[type="date"]:disabled {
+    border-style: dashed;
+    background: #fafafa;
+    color: #a2a9b1;
+}
+
+.thonly-activity-app .thonly-date-hint {
+    flex-basis: 100%;
+    margin: 0;
+    color: #72777d;
+    font-size: 0.86em;
+}
+
+/* 提示条 */
+.thonly-app .thonly-message {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    padding: 0.6em 1.1em;
+    border-radius: 4px;
+    background: #333;
+    color: #fff;
+    font-size: 0.9em;
+    z-index: 20;
+}
+
+.thonly-app .thonly-message.is-error {
+    background: #b32424;
+}
+
+/* 回到顶部（原站 tool.css；只有独立页 /excel 用，wiki 页面皮肤自带） */
+.thonly-back-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #757575;
+    color: #fff;
+    opacity: 0.7;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
+.thonly-back-to-top svg {
+    width: 24px;
+    height: 24px;
+    fill: #fff;
+}
+
+@media (max-width: 768px) {
+    .thonly-app {
+        width: 100%;
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .thonly-app .thonly-title {
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+
+    .thonly-app table.thonly-excel,
+    .thonly-app table.thonly-excel th,
+    .thonly-app table.thonly-excel td {
+        border: none;
+    }
+
+    .thonly-app table.thonly-excel th,
+    .thonly-app table.thonly-excel td {
+        padding: 10px;
+        font-size: 14px;
+        white-space: normal;
+    }
+
+    .thonly-app table.thonly-excel {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}

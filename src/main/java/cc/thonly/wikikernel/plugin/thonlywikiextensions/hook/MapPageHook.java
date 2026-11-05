@@ -83,6 +83,7 @@ public class MapPageHook implements PageDisplayHook {
 
         StringBuilder html = new StringBuilder(32768);
         html.append("<div class=\"thonly-map-app\">");
+        html.append(ActivityToolbar.render(PAGE_TITLE));
         html.append("<div class=\"thonly-map-bar\">")
                 .append("<span class=\"thonly-map-hint\">滚轮缩放 / 拖拽平移；点击省份查看该地区的活动词条")
                 .append("（数据来自分类，如 分类:福建活动；共 ").append(totalMembers).append(" 个词条）。</span>")

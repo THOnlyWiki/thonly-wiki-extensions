@@ -20,7 +20,9 @@ public final class CalendarAssets {
     /** {@code <head>} 片段（样式在上、脚本 defer，顺序即执行顺序）。 */
     public static List<String> headItems() {
         return List.of(
+                "<link rel=\"stylesheet\" href=\"/plugins/thonly-wiki-extensions/activity-toolbar.css?v=1\">",
                 "<link rel=\"stylesheet\" href=\"/plugins/thonly-wiki-extensions/activity-calendar.css\">",
-                "<script defer src=\"/plugins/thonly-wiki-extensions/activity-calendar.js\"></script>");
+                "<script defer src=\"/plugins/thonly-wiki-extensions/activity-regions.js?v=3\"></script>",
+                "<script defer src=\"/plugins/thonly-wiki-extensions/activity-calendar.js?v=2\"></script>");
     }
 }
