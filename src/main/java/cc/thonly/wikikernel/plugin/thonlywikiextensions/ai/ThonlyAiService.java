@@ -147,6 +147,12 @@ public class ThonlyAiService {
                 errors.addAll(warnings);
                 continue;
             }
+            int dateYear = yearOfDate(operation.date());
+            if (dateYear > 0 && dateYear != year) {
+                errors.add("活动「" + operation.name() + "」的日期属于 " + dateYear
+                        + " 年，请切换到 " + dateYear + " 年后再导入。");
+                continue;
+            }
             try {
                 if ("update".equals(operation.type())) {
                     boolean updated = store.update(viewer, year, operation.id(), operation.category(),
@@ -205,6 +211,11 @@ public class ThonlyAiService {
         String status = clip(field(raw, "status", existing == null ? "" : text(existing.get("status"))), 50);
         String region = clip(field(raw, "region", existing == null ? "" : text(existing.get("region"))), 100);
         String date = normalizeDate(field(raw, "date", existing == null ? "" : text(existing.get("date"))), year);
+        int dateYear = yearOfDate(date);
+        if (dateYear > 0 && dateYear != year) {
+            warnings.add("活动「" + name + "」的日期属于 " + dateYear + " 年，应用时会被跳过；请切换到 "
+                    + dateYear + " 年后再导入。");
+        }
         String qq = clip(field(raw, "qq", existing == null ? "" : text(existing.get("qq"))), 100);
         String key = nameKey(name);
         if ("create".equals(type) && (names.contains(key) || plannedNames.contains(key))) {
@@ -317,6 +328,27 @@ public class ThonlyAiService {
             }
         }
         return "tho";
+    }
+
+    /** 从 yyyy/M/d（也接受 - . 年分隔）取年份；暂无 / 待定返回 0。 */
+    private static int yearOfDate(String date) {
+        if (date == null) {
+            return 0;
+        }
+        String text = date.trim();
+        if (text.length() < 5) {
+            return 0;
+        }
+        for (int index = 0; index < 4; index++) {
+            if (!Character.isDigit(text.charAt(index))) {
+                return 0;
+            }
+        }
+        char separator = text.charAt(4);
+        if (separator != '/' && separator != '-' && separator != '.' && separator != '年') {
+            return 0;
+        }
+        return Integer.parseInt(text.substring(0, 4));
     }
 
     private static String normalizeDate(String raw, int year) {

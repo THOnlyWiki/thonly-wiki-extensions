@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 活动速查表的 API（「表格要有 API 可以读取」的那套；写接口全部走鉴权）：
@@ -112,6 +114,15 @@ public class ActivityApiController {
         }
         int year = intOf(params.get("year"), 0);
         long id = longOf(params.get("id"), 0);
+        if (year < 2000 || year > 2100) {
+            return ResponseEntity.badRequest().body(Map.of("message", "年份无效"));
+        }
+        // 活动表按年份分表；日期里的年份必须和所选年份一致，否则 2027 的活动会出现在 2026 筛选中。
+        int dateYear = yearOfDate(params.get("date"));
+        if (dateYear > 0 && dateYear != year) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", "活动日期属于 " + dateYear + " 年，请先切换到 " + dateYear + " 年再保存"));
+        }
         String comment = params.get("comment");
         try {
             if (id <= 0) {
@@ -188,6 +199,17 @@ public class ActivityApiController {
         result.put("icsUrl", CalendarLinks.icsUrl(year, id, date));
         result.put("year", year);
         return result;
+    }
+
+    private static final Pattern DATE_YEAR = Pattern.compile("^\\s*(\\d{4})\\s*[/.\\-]");
+
+    /** 从 yyyy/M/d 或 yyyy-M-d 取年份；「暂无」「待定」等返回 0。 */
+    private static int yearOfDate(String date) {
+        if (date == null) {
+            return 0;
+        }
+        Matcher matcher = DATE_YEAR.matcher(date);
+        return matcher.find() ? Integer.parseInt(matcher.group(1)) : 0;
     }
 
     private static int intOf(String value, int fallback) {

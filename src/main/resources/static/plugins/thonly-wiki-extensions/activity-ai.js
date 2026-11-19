@@ -315,10 +315,20 @@
             showMessage('thonly-ai-status', '没有勾选任何候选操作。', false);
             return;
         }
+        var year = Number(currentYear());
+        var mismatched = selected.filter(function (operation) {
+            var match = /^(\d{4})[/.\-]/.exec((operation && operation.date) || '');
+            return match && +match[1] !== year;
+        });
+        if (mismatched.length) {
+            showMessage('thonly-ai-status', '有 ' + mismatched.length
+                + ' 条候选的日期年份与当前年份不一致，请先切换到对应年份再应用。', false);
+            return;
+        }
         if (applyButton) {
             applyButton.disabled = true;
         }
-        postJson(BASE + '/apply', {year: Number(currentYear()), operations: selected}).then(function (data) {
+        postJson(BASE + '/apply', {year: year, operations: selected}).then(function (data) {
             if (data && data.errors && data.errors.length) {
                 showMessage('thonly-ai-status', '已应用 ' + (data.applied || 0) + ' 条；'
                     + data.errors.join('；'), false);

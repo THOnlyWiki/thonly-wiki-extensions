@@ -250,6 +250,12 @@
         return m ? (+m[1]) + '/' + (+m[2]) + '/' + (+m[3]) : '';
     }
 
+    /** yyyy/M/d → 年份；暂无 / 待定返回 0。 */
+    function dateYear(value) {
+        var m = /^(\d{4})[/.\-]/.exec((value || '').trim());
+        return m ? +m[1] : 0;
+    }
+
     /** 「暂无」勾选时禁用日期控件；日期控件有值时取消勾选由 change 事件处理。 */
     function syncDateField(none) {
         var input = byId('thonly-f-date');
@@ -354,17 +360,24 @@
             message('「名字」不能为空。', false);
             return;
         }
+        var date = resolveDate();
+        var year = currentYear();
+        var targetYear = dateYear(date);
+        if (targetYear && targetYear !== +year) {
+            message('日期属于 ' + targetYear + ' 年，请先切换到 ' + targetYear + ' 年再保存。', false);
+            return;
+        }
         writing = true;
         byId('thonly-save').disabled = true;
         byId('thonly-save').textContent = '保存中…';
         post(BASE + '/save', new URLSearchParams({
-            year: currentYear(),
+            year: year,
             id: editingRow ? (editingRow.getAttribute('data-id') || '') : '',
             category: fieldValue('thonly-f-category'),
             status: fieldValue('thonly-f-status'),
             name: name,
             region: fieldValue('thonly-f-region'),
-            date: resolveDate(),
+            date: date,
             qq: fieldValue('thonly-f-qq'),
             comment: editingRow ? '表格编辑' : '表格新增'
         })).then(function (result) {
