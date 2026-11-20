@@ -39,7 +39,7 @@
         if (value && !Array.from(select.options).some(function (o) { return o.value === value; })) {
             var option = document.createElement('option'); option.value = value; option.textContent = value; select.appendChild(option);
         }
-        select.value = value;
+        set(id, value);
     }
 
     async function loadYear(year, options) {
@@ -157,6 +157,9 @@
         var element = byId(id);
         if (element) {
             element.value = value == null ? '' : value;
+            if (element.matches('.thonly-filter-field select')) {
+                element.dispatchEvent(new Event('thonly:filter-sync'));
+            }
         }
     }
 
@@ -264,7 +267,7 @@
                 var option = document.createElement('option'); option.value = value; option.textContent = value; select.appendChild(option);
             }
             if (select && value != null && Array.prototype.some.call(select.options, function (o) { return o.value === value; })) {
-                select.value = value;
+                set(id, value);
             }
         });
         var input = document.querySelector('.thonly-search'); if (input) input.value = params.get('activity-search') || '';

@@ -190,7 +190,7 @@
     margin-bottom: 6px;
 }
 
-.thonly-activity-app .thonly-filters :is(input,select),
+.thonly-activity-app .thonly-filters :is(input,select,.thonly-filter-trigger),
 .thonly-activity-overlay .thonly-edit-fields :is(input:not([type=checkbox]),select) {
     display: block;
     width: 100%;
@@ -209,6 +209,136 @@
 
 .thonly-activity-app .thonly-filters input:focus, .thonly-activity-app .thonly-filters select:focus {
     border-color: var(--thonly-accent);
+}
+
+.thonly-activity-app .thonly-filters button.thonly-filter-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0;
+    text-align: start;
+    cursor: pointer;
+    transition: border-color .16s ease, background-color .16s ease;
+}
+
+.thonly-filter-trigger span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.thonly-filter-trigger::after {
+    content: '';
+    flex: 0 0 7px;
+    height: 7px;
+    margin-inline-end: 3px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform .16s cubic-bezier(.22,.58,.12,.98);
+}
+
+.thonly-filter-trigger[aria-expanded="true"]::after {
+    transform: translateY(2px) rotate(225deg);
+}
+
+.thonly-activity-app .thonly-filters .thonly-filter-trigger:is(:hover,[aria-expanded="true"]) {
+    border-color: var(--thonly-accent);
+    background: var(--thonly-soft);
+}
+
+.thonly-activity-app .thonly-filters :is(.thonly-filter-trigger,.thonly-filter-option):focus-visible {
+    outline: 2px solid var(--thonly-accent);
+    outline-offset: -2px;
+}
+
+.thonly-filter-menu {
+    position: fixed;
+    inset: auto;
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    margin: 0;
+    padding: 5px;
+    border: 1px solid var(--thonly-border);
+    border-radius: var(--thonly-radius);
+    background: var(--thonly-bg);
+    color: var(--thonly-text);
+    box-shadow: 0 6px 18px rgb(0 0 0 / 16%);
+    opacity: 0;
+    --thonly-menu-offset: -5px;
+    transform: translateY(var(--thonly-menu-offset));
+    transition: opacity .16s cubic-bezier(.22,.58,.12,.98), transform .16s cubic-bezier(.22,.58,.12,.98),
+                display .16s allow-discrete, overlay .16s allow-discrete;
+}
+
+.thonly-filter-menu.opens-up { --thonly-menu-offset: 5px; }
+
+.thonly-filter-menu:popover-open {
+    display: flex;
+    opacity: 1;
+    transform: none;
+}
+
+@starting-style {
+    .thonly-filter-menu:popover-open {
+        opacity: 0;
+        transform: translateY(var(--thonly-menu-offset));
+    }
+}
+
+.thonly-filter-menu input[type="search"] {
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.thonly-filter-options {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.thonly-activity-app .thonly-filters button.thonly-filter-option {
+    display: block;
+    width: 100%;
+    min-height: 36px;
+    margin: 0;
+    padding: 6px 9px;
+    border: 0;
+    border-radius: var(--border-radius--small,4px);
+    background: transparent;
+    color: var(--thonly-text);
+    font: inherit;
+    font-size: .88em;
+    text-align: start;
+    white-space: normal;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.thonly-activity-app .thonly-filters button.thonly-filter-option:hover {
+    background: var(--thonly-soft);
+}
+
+.thonly-activity-app .thonly-filters button.thonly-filter-option[aria-selected="true"] {
+    background: color-mix(in srgb, var(--thonly-accent) 13%, var(--thonly-bg));
+    color: var(--thonly-text);
+    font-weight: 600;
+    box-shadow: inset 2px 0 var(--thonly-accent);
+}
+
+.thonly-filter-no-match {
+    margin: 5px 9px;
+    color: var(--thonly-muted);
+    font-size: .88em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .thonly-activity-app .thonly-filters .thonly-filter-trigger,
+    .thonly-filter-trigger::after,
+    .thonly-filter-menu { transition: none; }
 }
 
 .thonly-more-filters {
@@ -846,9 +976,11 @@ body.thonly-dialog-open {
         font-size: .78em;
     }
 
-    .thonly-activity-app .thonly-filters :is(input,select) {
+    .thonly-activity-app .thonly-filters :is(input,select,.thonly-filter-trigger,.thonly-filter-option) {
         font-size: 16px;
     }
+
+    .thonly-activity-app .thonly-filters button.thonly-filter-option { min-height: 44px; }
 
     .thonly-activity-app .thonly-search-row {
         gap: 8px;
