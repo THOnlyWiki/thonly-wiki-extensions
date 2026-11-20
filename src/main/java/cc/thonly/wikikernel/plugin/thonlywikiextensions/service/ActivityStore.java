@@ -35,7 +35,7 @@ import java.util.TreeSet;
  * thonly_activity_revision (id, year, activity_id, action, category, status, name, region,
  *                           date, qq, revision_user, comment, created_at)
  * </pre>
- * 所有写操作都会：① 写一行变更历史（供回滚）② 写一条 {@code edit} 日志（目标
+ * 所有写操作都会：① 写一行变更历史（供回滚）② 写一条 {@code activity} 日志（目标
  * 「线下活动速查表」）→ 最近更改里可见。
  * <p>
  * 首次启动（表为空时）从插件资源 {@code /thonly-activity-seed.tsv} 导入线上抓下来的数据。
@@ -60,6 +60,16 @@ public class ActivityStore {
 
     @Autowired
     private LogWriter logWriter;
+
+    /** Called after plugin startup has confirmed both core and activity tables exist. */
+    public void migrateLegacyLogs() {
+        try {
+            int changed = new ActivityLegacyLogs(db).migrate();
+            if (changed > 0) log.info("已将 {} 条旧活动操作归入活动日志，保留原日志编号、时间与详情。", changed);
+        } catch (RuntimeException exception) {
+            log.warn("旧活动日志归类未完成，将在下次启动重试：{}", exception.getMessage());
+        }
+    }
 
     @PostConstruct
     public void bootstrap() {
@@ -281,10 +291,10 @@ public class ActivityStore {
                 LocalDateTime.now().format(TIME));
     }
 
-    /** 记「最近更改」：复用 core 的 edit 日志类型，目标 = 速查表页面。 */
+    /** 记录独立活动日志，供日志页和最近更改显示；目标 = 速查表页面。 */
     private void logWrite(Viewer viewer, String detail) {
         try {
-            logWriter.record("edit", viewer == null || viewer.anonymous() ? null : viewer.id(),
+            logWriter.record("activity", viewer == null || viewer.anonymous() ? null : viewer.id(),
                     PAGE_TITLE, detail);
         } catch (RuntimeException exception) {
             log.warn("活动表格日志写入失败：{}", exception.getMessage());

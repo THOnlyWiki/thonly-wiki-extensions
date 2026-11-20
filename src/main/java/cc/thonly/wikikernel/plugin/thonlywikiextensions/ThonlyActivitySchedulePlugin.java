@@ -70,6 +70,12 @@ public class ThonlyActivitySchedulePlugin implements WikiPlugin {
 
     @Override
     public void onStart(PluginContext context) {
+        activityStore.migrateLegacyLogs();
+        var activityLogs = new cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.ActivityLogType();
+        context.register(cc.thonly.wikikernel.common.extension.LogType.class, activityLogs);
+        context.register(cc.thonly.wikikernel.common.extension.MessageBundle.class, activityLogs);
+        context.register(cc.thonly.wikikernel.common.extension.ActivityProvider.class,
+                new cc.thonly.wikikernel.plugin.thonlywikiextensions.service.ActivityNewsProvider(activityStore));
         context.register(PageDisplayHook.class, pageHook);
         context.register(PageDisplayHook.class, mapPageHook);
         context.register(PageDisplayHook.class, calendarPageHook);
@@ -86,6 +92,9 @@ public class ThonlyActivitySchedulePlugin implements WikiPlugin {
         context.register(HtmlHeadProvider.class,
                 new CalendarHeadProvider());
     }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private cc.thonly.wikikernel.plugin.thonlywikiextensions.service.ActivityStore activityStore;
 
     @Override
     public PluginDescriptor descriptor() {

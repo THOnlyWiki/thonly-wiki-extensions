@@ -148,14 +148,18 @@
             return;
         }
         postForm(BASE + '/config', params).then(function () {
-            window.location.reload();
+            show(configDialog, false);
+            if (window.ThonlyActivity) return window.ThonlyActivity.refresh('已保存 AI 配置。');
         }).catch(function (error) {
             showMessage('thonly-ai-config-message', error.message || '保存失败。', false);
         });
     }
 
     if (configButton) {
-        configButton.addEventListener('click', openConfig);
+        configButton.addEventListener('click', function () {
+            var pattern = window.mw && mw.config.get('wgArticlePath') || '/wiki/$1';
+            location.href = pattern.replace('$1', encodeURIComponent('特殊:AI管理'));
+        });
     }
     var configSave = byId('thonly-ai-config-save');
     if (configSave) {
@@ -336,9 +340,8 @@
                 showMessage('thonly-ai-status', '已应用 ' + (data.applied || 0) + ' 条，正在刷新…', true);
             }
             if (data && data.applied > 0) {
-                window.setTimeout(function () {
-                    window.location.reload();
-                }, 700);
+                if (window.ThonlyActivity) window.ThonlyActivity.refresh('已应用 AI 整理结果。');
+                if (applyButton) applyButton.disabled = true;
             } else if (applyButton) {
                 applyButton.disabled = false;
             }

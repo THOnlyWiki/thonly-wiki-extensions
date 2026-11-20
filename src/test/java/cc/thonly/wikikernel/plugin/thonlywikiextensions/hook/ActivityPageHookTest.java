@@ -20,6 +20,17 @@ import java.util.regex.Pattern;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ActivityPageHookTest {
+    @Test void asynchronousFragmentsShareSortingEscapingPermissionsAndRegionOrder() {
+        var rows = List.of(row(90, "tho", "定档", "<script>bad()</script>", "日本国", "2026/12/1", "联络"),
+                row(91, "thp", "计划", "较早活动", "江苏省", "2026/1/1", ""));
+        var anonymous = ActivityPageHook.tableView(2026, rows, false, false);
+        String body = (String) anonymous.get("body");
+        assertTrue(body.indexOf("较早活动") < body.indexOf("&lt;script&gt;"));
+        assertFalse(body.contains("<script>")); assertFalse(body.contains("class=\"thonly-edit\""));
+        assertTrue(((String) anonymous.get("regions")).contains("value=\"日本国\""));
+        assertTrue(((String) ActivityPageHook.tableView(2026, rows, true, false).get("body")).contains("class=\"thonly-edit\""));
+        assertFalse(((String) ActivityPageHook.tableView(2026, rows, true, true).get("body")).contains("thonly-edit"));
+    }
     @Test
     void navigationAndCountryFiltersAreSharedAcrossActivityPages() throws Exception {
         String table = hook(ROWS, false).renderBody(context(TITLE, EDITOR));
@@ -126,7 +137,7 @@ class ActivityPageHookTest {
             }
             @Override public Optional<String> blockNotice(Viewer viewer) { return Optional.empty(); }
         });
-        set(hook, "aiConfig", new ThonlyAiConfig(null) {
+        set(hook, "aiConfig", new ThonlyAiConfig(null, null, null) {
             @Override public Settings settings() {
                 return new Settings(true, "AI 整理导入", "", "", false, false);
             }

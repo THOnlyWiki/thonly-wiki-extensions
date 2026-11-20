@@ -1,0 +1,6 @@
+.thonly-loading{display:flex;align-items:center;gap:10px;padding:12px 16px;margin:8px 0;border-radius:6px;color:var(--thonly-accent,var(--color-primary,#36c));background:var(--thonly-soft,#f8f9fa);font-size:14px}
+.thonly-loading[hidden]{display:none!important}
+.thonly-loading:before{content:'';width:16px;height:16px;flex:0 0 16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:thonly-loading-spin .8s linear infinite}
+table.thonly-excel.is-loading{opacity:.45;pointer-events:none;transition:opacity .15s ease}
+@keyframes thonly-loading-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.thonly-loading:before{animation:none}table.thonly-excel.is-loading{transition:none}}

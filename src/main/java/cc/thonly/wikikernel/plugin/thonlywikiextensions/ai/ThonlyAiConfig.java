@@ -23,9 +23,13 @@ public class ThonlyAiConfig {
     public static final String DEFAULT_MODEL = "";
 
     private final SiteConfig siteConfig;
+    private final cc.thonly.wikikernel.common.ai.AiConfig aiConfig;
+    private final cc.thonly.wikikernel.common.ai.AiTasks tasks;
 
-    public ThonlyAiConfig(SiteConfig siteConfig) {
+    public ThonlyAiConfig(SiteConfig siteConfig, cc.thonly.wikikernel.common.ai.AiConfig aiConfig, cc.thonly.wikikernel.common.ai.AiTasks tasks) {
         this.siteConfig = siteConfig;
+        this.aiConfig = aiConfig;
+        this.tasks = tasks;
     }
 
     public Settings settings() {
@@ -33,58 +37,35 @@ public class ThonlyAiConfig {
         if (label == null || label.isBlank()) {
             label = DEFAULT_LABEL;
         }
-        String key = siteConfig.get(API_KEY_KEY, "");
+        boolean ready = tasks.configured("activity");
         return new Settings(
-                siteConfig.getBoolean(ENABLED_KEY, false),
+                ready,
                 label.length() > 60 ? label.substring(0, 60) : label,
-                siteConfig.get(BASE_URL_KEY, ""),
-                siteConfig.get(MODEL_KEY, DEFAULT_MODEL),
-                key != null && !key.isBlank(),
-                siteConfig.getBoolean(ALLOW_PRIVATE_KEY, false));
+                ready ? "core-ai:activity" : "",
+                ready ? tasks.model("activity") : "",
+                ready,
+                false);
     }
 
-    public String apiKey() {
-        return siteConfig.get(API_KEY_KEY, "");
-    }
+    public String apiKey() { return ""; }
+    public String endpoint() { return "core-ai:activity"; }
 
-    public String endpoint() {
-        return ThonlyAiEndpointPolicy.chatCompletionsUrl(siteConfig.get(BASE_URL_KEY, ""));
-    }
-
-    /**
-     * 保存配置。{@code apiKey} 为 {@code null} 或空白表示不修改已保存的密钥；
-     * {@code clearKey} 为 true 时清空。
-     */
+    /** Compatibility for older activity clients. New clients configure AI in core. */
     public void save(boolean enabled, String label, String baseUrl, String model,
                      String apiKey, boolean clearKey, boolean allowPrivate) {
-        String labelValue = clean(label);
-        if (labelValue.isEmpty()) {
-            labelValue = DEFAULT_LABEL;
-        }
-        if (labelValue.length() > 60) {
-            labelValue = labelValue.substring(0, 60);
-        }
-        String baseValue = clean(baseUrl);
-        String modelValue = clean(model);
-        if (enabled && baseValue.isEmpty()) {
-            throw new IllegalArgumentException("启用 AI 前请填写 OpenAI 兼容接口地址。");
-        }
-        if (enabled && modelValue.isEmpty()) {
-            throw new IllegalArgumentException("启用 AI 前请填写模型名称。");
-        }
-        if (!baseValue.isEmpty()) {
-            ThonlyAiEndpointPolicy.validate(baseValue, allowPrivate);
-        }
-        siteConfig.set(ENABLED_KEY, Boolean.toString(enabled));
-        siteConfig.set(LABEL_KEY, labelValue);
-        siteConfig.set(BASE_URL_KEY, baseValue);
-        siteConfig.set(MODEL_KEY, modelValue);
-        siteConfig.set(ALLOW_PRIVATE_KEY, Boolean.toString(allowPrivate));
-        if (clearKey) {
-            siteConfig.set(API_KEY_KEY, "");
-        } else if (apiKey != null && !apiKey.isBlank()) {
-            siteConfig.set(API_KEY_KEY, apiKey.trim());
-        }
+        String id = "thonly-legacy";
+        ThonlyAiEndpointPolicy.validate(baseUrl, allowPrivate);
+        aiConfig.saveSite(id, apiKey == null || apiKey.isBlank() ? null : apiKey,
+                baseUrl.replaceAll("/chat/completions/?$", ""), model, "", clearKey);
+        siteConfig.set("ai.provider." + id + ".type", "openai");
+        siteConfig.set("ai.provider." + id + ".private", String.valueOf(allowPrivate));
+        java.util.Set<String> ids = new java.util.LinkedHashSet<>(
+                java.util.Arrays.asList(siteConfig.get("ai.profiles", "").split(",")));
+        ids.remove(""); ids.add(id);
+        siteConfig.set("ai.profiles", String.join(",", ids));
+        siteConfig.set("ai.scene.activity.provider", id);
+        siteConfig.set("ai.scene.activity.enabled", String.valueOf(enabled));
+        siteConfig.set(LABEL_KEY, clean(label).isBlank() ? DEFAULT_LABEL : clean(label));
     }
 
     private static String clean(String value) {

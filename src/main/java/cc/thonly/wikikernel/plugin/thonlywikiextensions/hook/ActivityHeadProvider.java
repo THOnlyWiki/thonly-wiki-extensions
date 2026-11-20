@@ -43,8 +43,9 @@ public class ActivityHeadProvider implements HtmlHeadProvider {
                     "<link rel=\"stylesheet\" href=\"/plugins/thonly-wiki-extensions/activity.css?v=2\">",
                     "<link rel=\"stylesheet\" href=\"/plugins/thonly-wiki-extensions/activity-ai.css\">",
                     "<script defer src=\"/plugins/thonly-wiki-extensions/activity-regions.js?v=3\"></script>",
-                    "<script defer src=\"/plugins/thonly-wiki-extensions/activity.js?v=3\"></script>",
-                    "<script defer src=\"/plugins/thonly-wiki-extensions/activity-ai.js\"></script>");
+                    "<link rel=\"stylesheet\" href=\"/plugins/thonly-wiki-extensions/activity-loading.css?v=1\">",
+                    "<script defer src=\"/plugins/thonly-wiki-extensions/activity.js?v=4\"></script>",
+                    "<script defer src=\"/plugins/thonly-wiki-extensions/activity-ai.js?v=2\"></script>");
         }
         if (ThonlyActivitySchedulePlugin.MAP_PAGE_TITLE.equals(title)) {
             // ECharts（~2.5MB）只在「活动分布地图」这一个页面加载

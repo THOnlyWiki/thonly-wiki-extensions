@@ -104,6 +104,17 @@ public class ActivityApiController {
         return ResponseEntity.ok(data);
     }
 
+    @GetMapping("/table")
+    public ResponseEntity<Object> table(@RequestParam(value = "year") int year,
+                                        @RequestParam(value = "layout", defaultValue = "wiki") String layout) {
+        Viewer viewer = currentUser.viewer();
+        if (!accessCheck.canRead(PAGE_TITLE, viewer)) return forbidden("permissions.readForbidden");
+        if (year < 2000 || year > 2100) return ResponseEntity.badRequest().body(Map.of("message", "年份不合法。"));
+        boolean canEdit = viewer.loggedIn() && accessCheck.can(AccessAction.EDIT, PAGE_TITLE, viewer);
+        return ResponseEntity.ok().header("Cache-Control", "no-store").body(
+                cc.thonly.wikikernel.plugin.thonlywikiextensions.hook.ActivityPageHook.tableView(year, store.list(year), canEdit, layout.equals("legacy")));
+    }
+
     // ==================== 写 ====================
 
     @PostMapping("/save")

@@ -217,6 +217,34 @@ public class ActivityPageHook implements PageDisplayHook {
         html.append("</div></td></tr>");
     }
 
+    /** Only the table fragment is sent when switching years; the outer page and dialogs stay mounted. */
+    public static Map<String, Object> tableView(int year, List<Map<String, Object>> input, boolean canEdit, boolean legacy) {
+        var rows = input.stream().sorted(Comparator.comparing(
+                (Map<String, Object> row) -> CalendarLinks.parseDate(text(row.get("date"))),
+                Comparator.nullsLast(Comparator.naturalOrder()))).toList();
+        StringBuilder body = new StringBuilder();
+        for (var row : rows) {
+            if (!legacy) appendRow(body, year, row, canEdit);
+            else {
+                body.append("<tr data-id=\"").append(attr(text(row.get("id")))).append("\" data-category=\"")
+                        .append(attr(text(row.get("category")))).append("\">");
+                for (String key : List.of("status", "name", "region", "date", "qq")) {
+                    body.append(key.equals("status") && text(row.get(key)).contains("取消") ? "<td class=\"cancelled\">" : "<td>")
+                            .append(esc(text(row.get(key)))).append("</td>");
+                }
+                String url = CalendarLinks.icsUrl(year, ((Number) row.get("id")).longValue(), text(row.get("date")));
+                body.append("<td>");
+                if (url != null) body.append("<a download href=\"").append(attr(url)).append("\">加入日历</a>");
+                body.append("</td></tr>");
+            }
+        }
+        StringBuilder regions = new StringBuilder("<option value=\"\">全部地区</option>");
+        appendOptions(regions, rows, "region");
+        StringBuilder statuses = new StringBuilder("<option value=\"\">全部状态</option>");
+        appendOptions(statuses, rows, "status");
+        return Map.of("year", year, "body", body.toString(), "regions", regions.toString(), "statuses", statuses.toString(), "canEdit", canEdit);
+    }
+
     private static String categoryLabel(String category) {
         return switch (category) {
             case "THO" -> "THO";
