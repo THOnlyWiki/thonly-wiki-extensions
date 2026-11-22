@@ -26,9 +26,9 @@ class ActivityPageHookTest {
         var anonymous = ActivityPageHook.tableView(2026, rows, false, false);
         String body = (String) anonymous.get("body");
         assertTrue(body.indexOf("较早活动") < body.indexOf("&lt;script&gt;"));
-        assertFalse(body.contains("<script>")); assertFalse(body.contains("class=\"thonly-edit\""));
+        assertFalse(body.contains("<script>")); assertFalse(body.contains("class=\"wiki-button wiki-button-quiet thonly-edit\""));
         assertTrue(((String) anonymous.get("regions")).contains("value=\"日本国\""));
-        assertTrue(((String) ActivityPageHook.tableView(2026, rows, true, false).get("body")).contains("class=\"thonly-edit\""));
+        assertTrue(((String) ActivityPageHook.tableView(2026, rows, true, false).get("body")).contains("class=\"wiki-button wiki-button-quiet thonly-edit\""));
         assertFalse(((String) ActivityPageHook.tableView(2026, rows, true, true).get("body")).contains("thonly-edit"));
     }
     @Test

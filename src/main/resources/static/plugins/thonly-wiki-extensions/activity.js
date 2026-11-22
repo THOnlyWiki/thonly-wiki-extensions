@@ -538,7 +538,7 @@
                     + (revision.revision_user ? '（' + revision.revision_user + '）' : '') + ' '));
                 var rollback = document.createElement('button');
                 rollback.type = 'button';
-                rollback.className = 'thonly-rollback';
+                rollback.className = 'wiki-button wiki-button-quiet thonly-rollback';
                 rollback.setAttribute('data-revision', String(revision.id));
                 rollback.textContent = '回滚';
                 item.appendChild(rollback);

@@ -199,7 +199,7 @@ public class ActivityPageHook implements PageDisplayHook {
                 .append(esc(date.isBlank() || "暂无".equals(date) ? "日期待定" : date)).append("</span></td>");
         html.append("<td class=\"thonly-col-status\"><span class=\"thonly-status-badge ").append(badgeClass)
                 .append("\">").append(esc(status.isBlank() ? "未填写" : status)).append("</span></td>");
-        html.append("<td class=\"thonly-col-name\"><button type=\"button\" class=\"thonly-detail\">")
+        html.append("<td class=\"thonly-col-name\"><button type=\"button\" class=\"wiki-button wiki-button-quiet thonly-detail\">")
                 .append(esc(name)).append("</button></td>");
         html.append("<td class=\"thonly-col-region\"><span class=\"thonly-mobile-label\">地区 · </span>")
                 .append(esc(region.isBlank() ? "未填写" : region)).append("</td>");
@@ -208,10 +208,10 @@ public class ActivityPageHook implements PageDisplayHook {
         html.append("<td class=\"thonly-col-qq\"><span class=\"thonly-mobile-label\">联络 · </span>")
                 .append(esc(qq.isBlank() ? "暂未公布" : qq)).append("</td><td class=\"thonly-actions\"><div>");
         if (canEdit) {
-            html.append("<button type=\"button\" class=\"thonly-edit\">编辑</button>");
+            html.append("<button type=\"button\" class=\"wiki-button wiki-button-quiet thonly-edit\">编辑</button>");
         }
         if (icsUrl != null) {
-            html.append("<a class=\"thonly-ics\" href=\"").append(icsUrl)
+            html.append("<a class=\"wiki-button wiki-button-quiet thonly-ics\" href=\"").append(icsUrl)
                     .append("\" download=\"\" title=\"下载 .ics，加入手机 / 电脑日历\">加入日历</a>");
         }
         html.append("</div></td></tr>");
@@ -282,7 +282,7 @@ public class ActivityPageHook implements PageDisplayHook {
                     .append(esc(settings.buttonLabel()))
                     .append("</button>");
         }
-        html.append("<button type=\"button\" id=\"thonly-ai-config\">AI 设置</button>");
+        html.append("<button type=\"button\" id=\"thonly-ai-config\" class=\"wiki-button\">AI 设置</button>");
         html.append("</div>");
         return html.toString();
     }
@@ -372,7 +372,7 @@ public class ActivityPageHook implements PageDisplayHook {
                 + "<input type=\"text\" id=\"thonly-f-qq\" maxlength=\"255\"/></div></div>"
                 + "<p class=\"thonly-edit-message\" id=\"thonly-edit-message\" role=\"alert\" hidden></p></div>"
                 + "<div class=\"wiki-dialog-actions\">"
-                + "<button type=\"button\" id=\"thonly-delete\" class=\"wiki-button wiki-button-quiet\" hidden>删除活动</button>"
+                + "<button type=\"button\" id=\"thonly-delete\" class=\"wiki-button wiki-button-quiet wiki-button-danger\" hidden>删除活动</button>"
                 + "<button type=\"button\" class=\"wiki-button thonly-dialog-cancel\">取消</button>"
                 + "<button type=\"submit\" id=\"thonly-save\" class=\"wiki-button wiki-button-primary\">保存活动</button>"
                 + "</div></form></div></div>";

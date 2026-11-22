@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title th:text="${pageTitle}">东方Project线下活动日程信息</title>
     <link rel="stylesheet" th:href="@{/plugins/thonly-wiki-extensions/activity-calendar.css}"/>
+    <link rel="stylesheet" th:href="@{/css/form-controls.css}"/>
     <meta name="robots" content="noindex"/>
 </head>
 <body class="thonly-calendar-page">
@@ -14,11 +15,11 @@
     <div class="thonly-calendar-head">
         <h1 th:text="${pageTitle}">东方Project线下活动日程信息</h1>
         <p>
-            <a th:href="@{/wiki/活动日历}">在 wiki 中查看</a>
+            <a th:href="@{/wiki/活动日历}" th:text="#{plugin.thonly-wiki-extensions.viewInWiki}">在 wiki 中查看</a>
             <span class="thonly-calendar-sep">·</span>
-            <a th:href="${scheduleUrl}">线下活动速查表</a>
+            <a th:href="${scheduleUrl}" th:text="#{plugin.thonly-wiki-extensions.scheduleTable}">线下活动速查表</a>
             <span class="thonly-calendar-sep">·</span>
-            <a th:href="@{/excel/}">活动表格（独立页）</a>
+            <a th:href="@{/excel/}" th:text="#{plugin.thonly-wiki-extensions.excelPage}">活动表格（独立页）</a>
         </p>
     </div>
     <div class="thonly-calendar-app">

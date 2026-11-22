@@ -465,28 +465,17 @@
     background: var(--thonly-soft);
 }
 
-.thonly-activity-app .thonly-detail, .thonly-activity-app .thonly-edit {
-    display: inline;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    color: var(--thonly-accent);
-    cursor: pointer;
-    font: inherit;
+.thonly-activity-app .thonly-detail {
+    --wiki-control-color: var(--thonly-accent);
+    --wiki-control-color-hover: var(--wiki-control-color);
+    padding-inline: 0;
+    font-size: inherit;
+    font-weight: 600;
     text-align: start;
     overflow-wrap: anywhere;
 }
 
-.thonly-activity-app .thonly-detail {
-    font-weight: 600;
-}
-
-.thonly-activity-app .thonly-detail:hover, .thonly-activity-app .thonly-edit:hover {
-    text-decoration: underline;
-}
-
-.thonly-activity-app :is(.thonly-detail,.thonly-edit,.thonly-more-filters),
+.thonly-activity-app .thonly-more-filters,
 .thonly-activity-app .thonly-quick-filters button {
     box-shadow: none;
     text-shadow: none;
@@ -549,15 +538,6 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 7px 12px;
-}
-
-.thonly-activity-app .thonly-actions a {
-    text-decoration: none;
-    white-space: nowrap;
-}
-
-.thonly-activity-app .thonly-actions a:hover {
-    text-decoration: underline;
 }
 
 .thonly-mobile-label {
@@ -626,28 +606,6 @@ body.thonly-dialog-open {
     width: min(920px,94vw);
 }
 
-.thonly-activity-overlay .wiki-button {
-    color: var(--thonly-text);
-    background: var(--thonly-soft);
-    border: 1px solid var(--thonly-border);
-}
-
-.thonly-activity-overlay .wiki-button:hover {
-    background: var(--background-color-quiet--hover, #eaecf0);
-    color: var(--thonly-text);
-}
-
-.thonly-activity-overlay .wiki-button-primary {
-    background: var(--wiki-button-primary-bg,var(--thonly-accent));
-    border-color: var(--thonly-accent);
-    color: var(--wiki-button-primary-text,#fff);
-}
-
-.thonly-activity-overlay .wiki-button-primary:hover {
-    background: var(--wiki-button-primary-bg-hover,var(--thonly-accent));
-    color: var(--wiki-button-primary-text,#fff);
-}
-
 .thonly-activity-overlay .wiki-dialog-title {
     padding: 18px 22px;
     gap: 12px;
@@ -659,11 +617,6 @@ body.thonly-dialog-open {
 .thonly-activity-overlay .wiki-dialog-title > span {
     min-width: 0;
     overflow-wrap: anywhere;
-}
-
-.thonly-activity-overlay .wiki-dialog-close {
-    flex-shrink: 0;
-    color: var(--thonly-muted);
 }
 
 .thonly-activity-overlay .wiki-dialog-body {
@@ -787,7 +740,6 @@ body.thonly-dialog-open {
 
 #thonly-delete {
     margin-inline-end: auto;
-    color: var(--thonly-error);
 }
 
 .thonly-detail-fields {
